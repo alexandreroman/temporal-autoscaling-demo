@@ -23,6 +23,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 25
+          cache: maven
       - name: Build
         run: ./mvnw package -DskipTests -B
         working-directory: ${{ matrix.module }}

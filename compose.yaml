@@ -25,6 +25,8 @@ services:
     depends_on:
       temporal:
         condition: service_healthy
+    deploy:
+      replicas: 3
 
   console:
     build:

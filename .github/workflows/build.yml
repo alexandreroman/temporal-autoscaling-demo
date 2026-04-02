@@ -37,6 +37,10 @@ jobs:
         module: [worker, console]
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
         include:
+          - module: worker
+            image: temporal-autoscaling-demo-worker
+          - module: console
+            image: temporal-autoscaling-demo-console
           - runner: ubuntu-24.04
             platform: linux/amd64
           - runner: ubuntu-24.04-arm
@@ -55,14 +59,14 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/${{ matrix.module }}
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v6
         with:
           context: ./${{ matrix.module }}
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=ghcr.io/${{ github.repository }}/${{ matrix.module }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=ghcr.io/${{ github.repository_owner }}/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.module }}-${{ matrix.platform }}
           cache-to: type=gha,scope=${{ matrix.module }}-${{ matrix.platform }},mode=max
       - name: Export digest
@@ -84,7 +88,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [worker, console]
+        include:
+          - module: worker
+            image: temporal-autoscaling-demo-worker
+          - module: console
+            image: temporal-autoscaling-demo-console
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -104,6 +112,6 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create \
-            -t ghcr.io/${{ github.repository }}/${{ matrix.module }}:latest \
-            -t ghcr.io/${{ github.repository }}/${{ matrix.module }}:${{ github.sha }} \
-            $(printf 'ghcr.io/${{ github.repository }}/${{ matrix.module }}@sha256:%s ' *)
+            -t ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:latest \
+            -t ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}:${{ github.sha }} \
+            $(printf 'ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}@sha256:%s ' *)

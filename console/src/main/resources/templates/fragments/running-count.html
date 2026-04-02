@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <span th:fragment="running-count"
+        id="running-count"
+        hx-get="/workflows/running-count"
+        hx-trigger="every 1s"
+        hx-swap="outerHTML"
+        class="font-mono text-[0.82rem] text-ink-faint
+          flex items-center gap-2">
+    <span th:if="${runningCount > 0}"
+          class="inline-block w-[6px] h-[6px]
+            rounded-full bg-accent animate-pulse">
+    </span>
+    <span th:text="${runningCount}"
+          class="text-lg font-semibold text-ink"></span> running
+  </span>
+</body>
+</html>

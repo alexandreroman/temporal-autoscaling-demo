@@ -1,0 +1,10 @@
+spring:
+  temporal:
+    connection:
+      target: ${TEMPORAL_ADDRESS:temporal.127-0-0-1.nip.io:7233}
+
+management:
+  otlp:
+    metrics:
+      export:
+        url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://otel.127-0-0-1.nip.io:4318}/v1/metrics

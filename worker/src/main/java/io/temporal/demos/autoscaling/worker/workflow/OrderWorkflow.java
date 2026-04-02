@@ -1,0 +1,25 @@
+package io.temporal.demos.autoscaling.worker.workflow;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.temporal.demos.autoscaling.worker.model.OrderStatus;
+import io.temporal.workflow.WorkflowInterface;
+import io.temporal.workflow.WorkflowMethod;
+import io.temporal.demos.autoscaling.worker.model.Order;
+
+import java.util.Optional;
+
+@WorkflowInterface
+public interface OrderWorkflow {
+    String TASK_QUEUE = "order-processing";
+
+    @WorkflowMethod
+    Result processOrder(Order order);
+
+    @JsonInclude(JsonInclude.Include.NON_ABSENT)
+    record Result(
+            String orderId,
+            OrderStatus status,
+            Optional<String> errorMessage
+    ) {
+    }
+}

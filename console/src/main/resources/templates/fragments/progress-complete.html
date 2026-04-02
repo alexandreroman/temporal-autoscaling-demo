@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <!--/* Primary swap: restore launch button */-->
+  <div th:replace="~{index :: launch-button}"></div>
+  <!--/* OOB: re-enable controls */-->
+  <div id="scenario-controls" hx-swap-oob="outerHTML">
+    <th:block
+      th:replace="~{index :: scenario-controls}">
+    </th:block>
+  </div>
+</body>
+</html>

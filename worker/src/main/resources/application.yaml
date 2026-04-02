@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: autoscaling-demo-worker
+
+  temporal:
+    connection:
+      target: ${TEMPORAL_ADDRESS:localhost:7233}
+    workers-auto-discovery:
+      packages:
+      - io.temporal.demos
+
+logging:
+  structured:
+    format:
+      console: ecs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  otlp:
+    metrics:
+      export:
+        url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
+  opentelemetry:
+    resource-attributes: &otel-tags
+      service.name: ${spring.application.name}
+      service.namespace: temporal-autoscaling-demo
+  tracing:
+    export:
+      enabled: false
+  metrics:
+    tags:
+      <<: *otel-tags

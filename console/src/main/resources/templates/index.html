@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>Temporal Autoscaling Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect"
+        href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: {
+              1: '#141414',
+              2: '#1A1A1A',
+              3: '#1E1E1E',
+              4: '#242424',
+            },
+            edge: {
+              DEFAULT: '#2D2D2D',
+              light: '#333',
+            },
+            accent: {
+              DEFAULT: '#00C895',
+              soft: 'rgba(0, 200, 149, 0.08)',
+              glow: 'rgba(0, 200, 149, 0.15)',
+              hover: '#00B383',
+            },
+            ink: {
+              DEFAULT: '#E8E8E8',
+              secondary: '#999',
+              faint: '#555',
+            },
+            flame: {
+              DEFAULT: '#FF6B4A',
+              soft: 'rgba(255, 107, 74, 0.08)',
+            },
+            violet: {
+              DEFAULT: '#7B61FF',
+              soft: 'rgba(123, 97, 255, 0.08)',
+            },
+          },
+          fontFamily: {
+            display: [
+              'DM Serif Display', 'Georgia', 'serif',
+            ],
+            sans: [
+              'Inter', 'system-ui', 'sans-serif',
+            ],
+            mono: [
+              'JetBrains Mono', 'Menlo', 'monospace',
+            ],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #141414;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140%;
+      height: 80%;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(0, 200, 149, 0.04) 0%,
+        transparent 60%
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 3px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(12px); }
+    }
+
+    .animate-fade-up {
+      animation: fadeUp 0.6s ease-out both;
+    }
+
+    .animate-fade-down {
+      animation: fadeDown 0.4s ease-out;
+    }
+
+    .htmx-swapping {
+      animation: fadeOut 0.4s ease-in both;
+    }
+
+    .animate-card-in {
+      animation: cardIn 0.6s ease-out 0.15s both;
+    }
+
+    .htmx-indicator { display: none; }
+    .htmx-request .htmx-indicator { display: block; }
+    .htmx-request.htmx-indicator { display: block; }
+
+    #scenario-controls {
+      transition: opacity 0.3s ease;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="font-sans text-ink min-h-screen antialiased">
+
+  <div class="relative z-[1] h-[2px]
+    bg-gradient-to-r from-accent via-accent/60
+    to-accent"></div>
+
+  <nav class="relative z-[1] flex items-center
+    justify-between px-12 py-5 max-sm:px-5
+    border-b border-edge">
+    <h1 class="text-2xl tracking-tight">
+      <span class="font-display text-ink">Order Processing</span>
+      <em class="font-display italic text-ink-secondary">Console</em>
+    </h1>
+    <span id="running-count"
+          hx-get="/workflows/running-count"
+          hx-trigger="load, every 1s"
+          hx-swap="outerHTML"
+          class="font-mono text-[0.82rem] text-ink-faint
+            flex items-center gap-2 lg:hidden">
+    </span>
+  </nav>
+
+  <div class="relative z-[1] max-w-[720px] mx-auto
+    pt-8 px-8 pb-12 max-sm:pt-6 max-sm:px-5
+    max-sm:pb-8">
+    <div class="bg-surface-2 border border-edge
+      rounded-2xl overflow-hidden
+      shadow-[0_4px_40px_rgba(0,0,0,0.3)]">
+      <div class="py-9 px-10 max-sm:p-6">
+        <div id="form-content"
+             th:fragment="form-content">
+        <div id="scenario-controls"
+             th:classappend="${disabled}
+               ? 'opacity-50 pointer-events-none
+                  select-none' : ''">
+        <th:block th:fragment="scenario-controls">
+        <div class="mb-8">
+          <div class="font-mono text-[0.62rem]
+            font-medium tracking-[0.1em] uppercase
+            text-ink-faint mb-[0.6rem]">
+            Presets
+          </div>
+          <div id="presets" class="flex gap-2">
+            <th:block th:fragment="preset-buttons">
+            <button type="button"
+                    data-preset="normal"
+                    th:class="'preset-btn inline-flex
+                      items-center gap-[0.4rem]
+                      py-2 px-4 rounded-full font-sans
+                      text-[0.8rem] font-semibold
+                      cursor-pointer transition-all
+                      duration-200 border-[1.5px] '
+                      + (${activePreset == 'normal'}
+                        ? 'border-accent bg-accent-soft text-accent'
+                        : 'border-edge-light text-ink-secondary hover:border-ink-faint')"
+                    hx-get="/presets/normal"
+                    hx-target="#form-content"
+                    hx-swap="outerHTML">
+              <span class="w-[6px] h-[6px]
+                rounded-full bg-accent"></span>
+              Normal
+            </button>
+            <button type="button"
+                    data-preset="load"
+                    th:class="'preset-btn inline-flex
+                      items-center gap-[0.4rem]
+                      py-2 px-4 rounded-full font-sans
+                      text-[0.8rem] font-semibold
+                      cursor-pointer transition-all
+                      duration-200 border-[1.5px] '
+                      + (${activePreset == 'load'}
+                        ? 'border-flame bg-flame-soft text-flame'
+                        : 'border-edge-light text-ink-secondary hover:border-ink-faint')"
+                    hx-get="/presets/load"
+                    hx-target="#form-content"
+                    hx-swap="outerHTML">
+              <span class="w-[6px] h-[6px]
+                rounded-full bg-flame"></span>
+              Load Test
+            </button>
+            <button type="button"
+                    data-preset="custom"
+                    th:class="'preset-btn inline-flex
+                      items-center gap-[0.4rem]
+                      py-2 px-4 rounded-full font-sans
+                      text-[0.8rem] font-semibold
+                      cursor-pointer transition-all
+                      duration-200 border-[1.5px] '
+                      + (${activePreset == 'custom'}
+                        ? 'border-violet bg-violet-soft text-violet'
+                        : 'border-edge-light text-ink-secondary hover:border-ink-faint')"
+                    hx-get="/presets/custom"
+                    hx-target="#form-content"
+                    hx-swap="outerHTML"
+                    hx-include="#scenario-form">
+              <span class="w-[6px] h-[6px]
+                rounded-full bg-violet"></span>
+              Custom
+            </button>
+            </th:block>
+          </div>
+        </div>
+
+        <div class="h-px bg-edge mb-8"></div>
+
+        <form th:action="@{/scenarios}" method="post"
+              id="scenario-form"
+              th:hx-post="@{/scenarios}"
+              hx-target="#launch-area"
+              hx-swap="innerHTML">
+          <input type="hidden" name="preset"
+                 id="preset-input"
+                 th:value="${activePreset} ?: 'normal'">
+
+          <div class="grid grid-cols-3 gap-4 mb-6
+            max-sm:grid-cols-1">
+            <div>
+              <label for="totalCount"
+                     class="block font-mono
+                       text-[0.62rem] font-medium
+                       tracking-[0.08em] uppercase
+                       text-ink-faint mb-[0.4rem]">
+                Total workflows
+              </label>
+              <input type="number" id="totalCount"
+                     name="totalCount"
+                     th:value="${totalCount}"
+                     min="10" step="10"
+                     hx-get="/plan"
+                     hx-include="#scenario-form"
+                     hx-target="#plan-summary"
+                     hx-swap="outerHTML"
+                     hx-trigger="input changed delay:300ms"
+                     class="w-full py-[0.7rem]
+                       px-[0.85rem] bg-surface-3
+                       border border-edge-light
+                       rounded-lg font-mono
+                       text-[0.95rem] font-medium
+                       text-ink outline-none
+                       transition-all duration-200
+                       focus:border-accent
+                       focus:ring-[3px]
+                       focus:ring-[rgba(0,200,149,0.1)]
+                       placeholder:text-ink-faint">
+              <div class="font-mono text-[0.6rem]
+                text-ink-faint mt-[0.3rem]">
+                Min. 10
+              </div>
+            </div>
+            <div>
+              <label for="batchSize"
+                     class="block font-mono
+                       text-[0.62rem] font-medium
+                       tracking-[0.08em] uppercase
+                       text-ink-faint mb-[0.4rem]">
+                Batch size
+              </label>
+              <input type="number" id="batchSize"
+                     name="batchSize"
+                     th:value="${batchSize}"
+                     min="1" step="1"
+                     hx-get="/plan"
+                     hx-include="#scenario-form"
+                     hx-target="#plan-summary"
+                     hx-swap="outerHTML"
+                     hx-trigger="input changed delay:300ms"
+                     class="w-full py-[0.7rem]
+                       px-[0.85rem] bg-surface-3
+                       border border-edge-light
+                       rounded-lg font-mono
+                       text-[0.95rem] font-medium
+                       text-ink outline-none
+                       transition-all duration-200
+                       focus:border-accent
+                       focus:ring-[3px]
+                       focus:ring-[rgba(0,200,149,0.1)]
+                       placeholder:text-ink-faint">
+              <div class="font-mono text-[0.6rem]
+                text-ink-faint mt-[0.3rem]">
+                Min. 1
+              </div>
+            </div>
+            <div>
+              <label for="delaySeconds"
+                     class="block font-mono
+                       text-[0.62rem] font-medium
+                       tracking-[0.08em] uppercase
+                       text-ink-faint mb-[0.4rem]">
+                Delay (s)
+              </label>
+              <input type="number" id="delaySeconds"
+                     name="delaySeconds"
+                     th:value="${delaySeconds}"
+                     min="1" step="1"
+                     hx-get="/plan"
+                     hx-include="#scenario-form"
+                     hx-target="#plan-summary"
+                     hx-swap="outerHTML"
+                     hx-trigger="input changed delay:300ms"
+                     class="w-full py-[0.7rem]
+                       px-[0.85rem] bg-surface-3
+                       border border-edge-light
+                       rounded-lg font-mono
+                       text-[0.95rem] font-medium
+                       text-ink outline-none
+                       transition-all duration-200
+                       focus:border-accent
+                       focus:ring-[3px]
+                       focus:ring-[rgba(0,200,149,0.1)]
+                       placeholder:text-ink-faint">
+              <div class="font-mono text-[0.6rem]
+                text-ink-faint mt-[0.3rem]">
+                Min. 1s
+              </div>
+            </div>
+          </div>
+
+          <div th:fragment="plan-summary"
+               id="plan-summary"
+               class="bg-surface-3 border border-edge
+                 rounded-lg py-[0.85rem] px-[1.15rem]
+                 mb-7 font-mono text-[0.78rem]
+                 text-ink-secondary leading-relaxed">
+            <strong class="text-ink font-medium"
+                    th:text="${totalCount}"></strong>
+            workflows in
+            <strong class="text-ink font-medium"
+                    th:text="${batchCount}"></strong>
+            batch<span
+              th:if="${batchCount != 1}">es</span>
+            <th:block th:if="${hasRemainder}">
+              (<span
+                th:text="${batchCount - 1}"></span
+              >&times;<span
+                th:text="${batchSize}"></span
+              >&nbsp;+&nbsp;<span
+                th:text="${lastBatchSize}"></span>)
+            </th:block>
+            <th:block th:unless="${hasRemainder}">
+              of <strong
+                class="text-ink font-medium"
+                th:text="${batchSize}"></strong>
+            </th:block>
+            <th:block
+              th:if="${delaySeconds > 0 and batchCount > 1}">
+              , <strong
+                class="text-ink font-medium"
+                th:text="${delaySeconds}"></strong>s
+              apart &mdash; total time
+              ~<strong
+                class="text-ink font-medium"
+                th:text="${totalTime}"></strong>s
+            </th:block>
+          </div>
+
+        </th:block>
+        </div>
+
+          <div id="launch-area">
+            <div th:fragment="launch-button">
+            <button type="submit"
+                    form="scenario-form"
+                    class="block w-full py-[0.85rem]
+                      px-8 border-none rounded-lg
+                      font-sans text-[0.92rem]
+                      font-semibold text-surface-1
+                      bg-accent cursor-pointer
+                      transition-all duration-200
+                      shadow-[0_2px_12px_rgba(0,200,149,0.25),0_1px_3px_rgba(0,0,0,0.2)]
+                      hover:bg-[#00D9A0]
+                      hover:-translate-y-px
+                      hover:shadow-[0_4px_20px_rgba(0,200,149,0.35),0_2px_6px_rgba(0,0,0,0.2)]
+                      active:translate-y-0
+                      active:bg-[#00B383]">
+              Launch Workflows
+            </button>
+            </div>
+            <div th:fragment="progress-bar"
+                 th:if="${scenarioId}"
+                 hx-get
+                 th:hx-get="@{'/scenarios/' + ${scenarioId}
+                   + '/progress'}"
+                 hx-trigger="every 500ms"
+                 hx-target="#launch-area"
+                 hx-swap="innerHTML">
+              <div class="flex items-center
+                justify-between mb-2">
+                <span class="font-mono text-[0.78rem]
+                  font-semibold text-ink-secondary">
+                  Launching workflows...
+                </span>
+                <span class="font-mono text-[0.72rem]
+                  text-ink-faint"
+                      th:text="${completedBatches} + '/'
+                        + ${totalBatches} + ' batches'">
+                </span>
+              </div>
+              <div class="w-full h-[6px] bg-surface-4
+                rounded-full overflow-hidden">
+                <div class="h-full bg-accent rounded-full
+                  transition-all duration-500 ease-out"
+                     th:style="'width:' + ${percent}
+                       + '%'">
+                </div>
+              </div>
+              <div class="font-mono text-[0.65rem]
+                text-ink-faint mt-[0.35rem]"
+                   th:text="${percent} + '% complete'">
+              </div>
+            </div>
+          </div>
+        </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end
+      gap-2 mt-4">
+      <span class="font-mono text-[0.82rem]
+        text-ink-faint">
+        Powered by</span>
+      <img src="/images/temporal-logo.png"
+           alt="Temporal" class="h-9 opacity-80">
+    </div>
+
+  </div>
+
+</body>
+</html>

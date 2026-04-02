@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <!--/* Primary swap: progress bar into #launch-area */-->
+  <div th:replace="~{index :: progress-bar}"></div>
+  <!--/* OOB: disable controls */-->
+  <div id="scenario-controls"
+       hx-swap-oob="outerHTML"
+       class="opacity-50 pointer-events-none select-none">
+    <th:block
+      th:replace="~{index :: scenario-controls}">
+    </th:block>
+  </div>
+</body>
+</html>

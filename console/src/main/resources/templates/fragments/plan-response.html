@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <!--/* Primary swap: replaces #plan-summary */-->
+  <div th:replace="~{index :: plan-summary}"></div>
+  <!--/* OOB swap: updates preset buttons */-->
+  <div id="presets" hx-swap-oob="true" class="flex gap-2">
+    <th:block th:replace="~{index :: preset-buttons}">
+    </th:block>
+  </div>
+</body>
+</html>

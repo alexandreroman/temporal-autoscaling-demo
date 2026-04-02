@@ -13,6 +13,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [worker, console]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Java
@@ -20,12 +23,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 25
-      - name: Build worker
+      - name: Build
         run: ./mvnw package -DskipTests -B
-        working-directory: worker
-      - name: Build console
-        run: ./mvnw package -DskipTests -B
-        working-directory: console
+        working-directory: ${{ matrix.module }}
 
   publish:
     needs: build

@@ -4,7 +4,7 @@ vars:
   APP_NAME: temporal-autoscaling-demo
 
 tasks:
-  deploy:
+  app-deploy:
     desc: Deploy to Kubernetes using the best available toolchain
     cmds:
       - |
@@ -19,7 +19,7 @@ tasks:
       - sh: command -v kustomize
         msg: "kustomize is required but not found in PATH"
 
-  delete:
+  app-delete:
     desc: Delete the deployment from Kubernetes
     cmds:
       - |

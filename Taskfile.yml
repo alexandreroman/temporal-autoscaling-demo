@@ -1,0 +1,33 @@
+version: "3"
+
+vars:
+  APP_NAME: temporal-autoscaling-demo
+
+tasks:
+  deploy:
+    desc: Deploy to Kubernetes using the best available toolchain
+    cmds:
+      - |
+        if command -v kapp &>/dev/null && command -v kbld &>/dev/null; then
+          kapp deploy -a {{.APP_NAME}} -c -y -f <(kustomize build k8s | kbld -f -)
+        elif command -v kapp &>/dev/null; then
+          kapp deploy -a {{.APP_NAME}} -c -y -f <(kustomize build k8s)
+        else
+          kustomize build k8s | kubectl apply -f -
+        fi
+    preconditions:
+      - sh: command -v kustomize
+        msg: "kustomize is required but not found in PATH"
+
+  delete:
+    desc: Delete the deployment from Kubernetes
+    cmds:
+      - |
+        if command -v kapp &>/dev/null; then
+          kapp delete -a {{.APP_NAME}} -y
+        else
+          kustomize build k8s | kubectl delete -f -
+        fi
+    preconditions:
+      - sh: command -v kustomize
+        msg: "kustomize is required but not found in PATH"

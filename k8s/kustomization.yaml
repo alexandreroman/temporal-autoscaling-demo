@@ -5,6 +5,7 @@ resources:
   - namespace.yaml
   - worker
   - console
+  - grafana
 secretGenerator:
   - name: temporal-connection
     literals:

@@ -39,6 +39,8 @@ management:
     metrics:
       export:
         url: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
+        histogram-flavor: explicit_bucket_histogram
+        step: 10s
   opentelemetry:
     resource-attributes: &otel-tags
       service.name: ${spring.application.name}
@@ -49,3 +51,7 @@ management:
   metrics:
     tags:
       <<: *otel-tags
+    distribution:
+      percentiles-histogram:
+        order.duration: true
+        order.activity.duration: true

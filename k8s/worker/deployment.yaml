@@ -13,7 +13,9 @@ spec:
     metadata:
       labels: *labels
     spec:
-      terminationGracePeriodSeconds: 45
+      # Activities complete in under 3 seconds;
+      # 20 seconds is plenty for graceful shutdown.
+      terminationGracePeriodSeconds: 20
       containers:
       - name: worker
         image: ghcr.io/alexandreroman/temporal-autoscaling-demo-worker:latest
@@ -23,7 +25,9 @@ spec:
         lifecycle:
           preStop:
             sleep:
-              seconds: 10
+              # Brief pause for endpoint de-registration
+              # before SIGTERM.
+              seconds: 3
         envFrom:
         - secretRef:
             name: temporal-connection

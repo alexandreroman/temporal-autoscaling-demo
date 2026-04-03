@@ -12,7 +12,9 @@ spring:
       - io.temporal.demos
 
   lifecycle:
-    timeout-per-shutdown-phase: 30s
+    # Activities complete in under 3 seconds;
+    # 10 seconds is enough to drain in-flight work.
+    timeout-per-shutdown-phase: 10s
 
 server:
   port: 0

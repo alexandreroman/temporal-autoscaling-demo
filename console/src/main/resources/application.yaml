@@ -5,6 +5,7 @@ spring:
   temporal:
     connection:
       target: ${TEMPORAL_ADDRESS:localhost:7233}
+    namespace: ${TEMPORAL_NAMESPACE:default}
 
   lifecycle:
     timeout-per-shutdown-phase: 30s

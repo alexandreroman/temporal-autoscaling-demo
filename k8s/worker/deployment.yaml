@@ -1,25 +1,17 @@
-# TemporalWorkerDeployment managed by the Temporal
-# Worker Controller. The controller auto-injects
-# TEMPORAL_ADDRESS, TEMPORAL_NAMESPACE,
-# TEMPORAL_DEPLOYMENT_NAME, and
-# TEMPORAL_WORKER_BUILD_ID into the container.
-apiVersion: temporal.io/v1alpha1
-kind: TemporalWorkerDeployment
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: worker
   namespace: temporal-autoscaling-demo
 spec:
   replicas: 1
-  sunset:
-    scaledownDelay: 1m
-    deleteDelay: 1m
-  workerOptions:
-    connectionRef:
-      name: temporal
-    temporalNamespace: default
-  rollout:
-    strategy: AllAtOnce
+  selector:
+    matchLabels: &labels
+      app.kubernetes.io/name: temporal-autoscaling-demo
+      app.kubernetes.io/component: worker
   template:
+    metadata:
+      labels: *labels
     spec:
       containers:
       - name: worker
@@ -27,9 +19,11 @@ spec:
         ports:
         - containerPort: 9081
           name: management
-        env:
-        - name: OTEL_EXPORTER_OTLP_ENDPOINT
-          value: "http://otel-collector.opentelemetry:4318"
+        envFrom:
+        - secretRef:
+            name: temporal-connection
+        - secretRef:
+            name: otel
         resources:
           requests:
             memory: 512Mi

@@ -6,17 +6,15 @@ kind: Deployment
 metadata:
   name: console
   namespace: temporal-autoscaling-demo
-  labels:
-    app: autoscaling-demo-console
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: autoscaling-demo-console
+    matchLabels: &labels
+      app.kubernetes.io/name: temporal-autoscaling-demo
+      app.kubernetes.io/component: console
   template:
     metadata:
-      labels:
-        app: autoscaling-demo-console
+      labels: *labels
     spec:
       containers:
         - name: console
@@ -26,9 +24,9 @@ spec:
               name: http
             - containerPort: 8081
               name: management
-          env:
-            - name: TEMPORAL_ADDRESS
-              value: "temporal-frontend.temporal:7233"
+          envFrom:
+            - secretRef:
+                name: temporal-connection
           resources:
             requests:
               memory: 256Mi

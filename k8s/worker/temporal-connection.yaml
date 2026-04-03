@@ -1,7 +1,0 @@
-apiVersion: temporal.io/v1alpha1
-kind: TemporalConnection
-metadata:
-  name: temporal
-  namespace: temporal-autoscaling-demo
-spec:
-  hostPort: "temporal-frontend.temporal:7233"

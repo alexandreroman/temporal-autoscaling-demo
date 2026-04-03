@@ -80,6 +80,20 @@ cd console && ./mvnw spring-boot:run -Dspring-boot.run.profiles=it
 | Grafana | http://grafana.127-0-0-1.nip.io |
 | Prometheus | http://prometheus.127-0-0-1.nip.io |
 
+### Kubernetes Deployment
+
+Deploy and manage the application on Kubernetes using
+[Task](https://taskfile.dev):
+
+```bash
+task app-deploy   # Deploy to Kubernetes
+task app-delete   # Delete the deployment
+```
+
+`app-deploy` picks the best available toolchain: **kapp + kbld**,
+**kapp** alone, or plain **kubectl**. Both tasks require
+`kustomize`.
+
 ## Debugging
 
 Inspect workflows via the Temporal CLI:

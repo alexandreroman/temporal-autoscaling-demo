@@ -70,41 +70,75 @@ public class OrderWorkflowImpl implements OrderWorkflow {
                             .build())
                     .build());
 
+    private final MetricsActivity metrics = Workflow.newActivityStub(
+            MetricsActivity.class,
+            ActivityOptions.newBuilder()
+                    .setStartToCloseTimeout(Duration.ofSeconds(2))
+                    .setRetryOptions(RetryOptions.newBuilder()
+                            .setMaximumAttempts(1)
+                            .build())
+                    .build());
+
+    private OrderStatus currentStatus = OrderStatus.PENDING;
+
+    @Override
+    public OrderStatus getStatus() {
+        return currentStatus;
+    }
+
+    private void updateStatus(String orderId, OrderStatus status) {
+        currentStatus = status;
+        metrics.recordOrderStatus(orderId, status);
+    }
+
     @Override
     public Result processOrder(Order order) {
         // Saga tracks compensations (refund, release inventory)
         // and runs them in reverse order if any step fails.
+        final var startTime = Workflow.currentTimeMillis();
         final var saga = new Saga(new Saga.Options.Builder().build());
         try {
             MDC.put("orderId", order.orderId());
             LOGGER.atInfo().log("Processing order");
 
+            updateStatus(order.orderId(), OrderStatus.VALIDATING);
             validation.validateOrder(order);
             LOGGER.atInfo().log("Order validated");
 
+            updateStatus(order.orderId(), OrderStatus.RESERVING);
             inventory.reserveInventory(order.items());
             saga.addCompensation(inventory::releaseInventory, order.items());
             LOGGER.atInfo().log("Inventory reserved");
 
+            updateStatus(order.orderId(), OrderStatus.PAYING);
             final var result = payment.processPayment(order.payment());
             saga.addCompensation(payment::refundPayment, result.transactionId());
             LOGGER.atInfo().addKeyValue("transactionId", result.transactionId()).log("Payment processed");
 
+            updateStatus(order.orderId(), OrderStatus.PREPARING);
             final var details = shipment.prepareShipment(order);
             LOGGER.atInfo().addKeyValue("trackingNumber", details.trackingNumber()).log("Shipment prepared");
 
+            updateStatus(order.orderId(), OrderStatus.NOTIFYING);
             notification.sendConfirmation(order, result, details);
             LOGGER.atInfo().log("Notification sent");
 
+            updateStatus(order.orderId(), OrderStatus.COMPLETED);
+            metrics.recordOrderDuration(Workflow.currentTimeMillis() - startTime);
             LOGGER.atInfo().log("Order completed");
             return new Result(order.orderId(), OrderStatus.COMPLETED, Optional.empty());
         } catch (Exception e) {
             LOGGER.atError().setCause(e).log("Order failed");
+            metrics.recordOrderCompensation();
+            updateStatus(order.orderId(), OrderStatus.COMPENSATING);
             saga.compensate();
+            updateStatus(order.orderId(), OrderStatus.FAILED);
             final var errorType = e instanceof ActivityFailure af
                     && af.getCause() instanceof ApplicationFailure appF
                     ? appF.getType()
                     : e.getClass().getSimpleName();
+            metrics.recordOrderFailure(errorType);
+            metrics.recordOrderDuration(Workflow.currentTimeMillis() - startTime);
             return new Result(
                     order.orderId(),
                     OrderStatus.FAILED,

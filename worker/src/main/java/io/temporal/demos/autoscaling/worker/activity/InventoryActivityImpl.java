@@ -1,5 +1,7 @@
 package io.temporal.demos.autoscaling.worker.activity;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.temporal.demos.autoscaling.worker.model.Order;
 import io.temporal.demos.autoscaling.worker.workflow.OrderWorkflow;
 import io.temporal.spring.boot.ActivityImpl;
@@ -13,12 +15,22 @@ import java.util.List;
 @ActivityImpl(taskQueues = OrderWorkflow.TASK_QUEUE)
 class InventoryActivityImpl implements InventoryActivity {
     private static final Logger LOGGER = LoggerFactory.getLogger(InventoryActivityImpl.class);
+    private final MeterRegistry registry;
+
+    InventoryActivityImpl(MeterRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public void reserveInventory(List<Order.Item> items) {
-        LOGGER.atInfo().addKeyValue("itemCount", items.size()).log("Reserving inventory");
-        Latency.simulate(300, 800);
-        LOGGER.atInfo().addKeyValue("itemCount", items.size()).log("Inventory reserved");
+        final var sample = Timer.start(registry);
+        try {
+            LOGGER.atInfo().addKeyValue("itemCount", items.size()).log("Reserving inventory");
+            Latency.simulate(300, 800);
+            LOGGER.atInfo().addKeyValue("itemCount", items.size()).log("Inventory reserved");
+        } finally {
+            sample.stop(registry.timer("order.activity.duration", "activity", "Inventory"));
+        }
     }
 
     @Override

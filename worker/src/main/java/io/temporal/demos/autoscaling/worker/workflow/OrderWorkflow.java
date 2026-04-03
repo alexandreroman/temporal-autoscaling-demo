@@ -2,6 +2,7 @@ package io.temporal.demos.autoscaling.worker.workflow;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.temporal.demos.autoscaling.worker.model.OrderStatus;
+import io.temporal.workflow.QueryMethod;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 import io.temporal.demos.autoscaling.worker.model.Order;
@@ -21,6 +22,9 @@ public interface OrderWorkflow {
 
     @WorkflowMethod
     Result processOrder(Order order);
+
+    @QueryMethod
+    OrderStatus getStatus();
 
     @JsonInclude(JsonInclude.Include.NON_ABSENT)
     record Result(

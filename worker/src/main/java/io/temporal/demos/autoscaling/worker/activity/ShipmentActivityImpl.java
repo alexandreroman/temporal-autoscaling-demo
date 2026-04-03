@@ -1,5 +1,7 @@
 package io.temporal.demos.autoscaling.worker.activity;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.temporal.demos.autoscaling.worker.model.Order;
 import io.temporal.demos.autoscaling.worker.model.ShipmentDetails;
 import io.temporal.demos.autoscaling.worker.workflow.OrderWorkflow;
@@ -17,23 +19,34 @@ import java.util.concurrent.ThreadLocalRandom;
 class ShipmentActivityImpl implements ShipmentActivity {
     private static final Logger LOGGER = LoggerFactory.getLogger(ShipmentActivityImpl.class);
     private static final String[] CARRIERS = {"DHL", "FedEx", "UPS"};
+    private final MeterRegistry registry;
+
+    ShipmentActivityImpl(MeterRegistry registry) {
+        this.registry = registry;
+    }
 
     @Override
     public ShipmentDetails prepareShipment(Order order) {
-        Latency.simulate(400, 1000);
+        final var sample = Timer.start(registry);
+        try {
+            Latency.simulate(400, 1000);
 
-        final var trackingNumber = "TRK-" + UUID.randomUUID().toString()
-                .substring(0, 8).toUpperCase();
-        final var carrier = CARRIERS[ThreadLocalRandom.current().nextInt(CARRIERS.length)];
-        final var estimatedDelivery = LocalDate.now().plusDays(3 + ThreadLocalRandom.current().nextInt(5));
+            final var trackingNumber = "TRK-" + UUID.randomUUID().toString()
+                    .substring(0, 8).toUpperCase();
+            final var carrier = CARRIERS[ThreadLocalRandom.current().nextInt(CARRIERS.length)];
+            final var estimatedDelivery = LocalDate.now()
+                    .plusDays(3 + ThreadLocalRandom.current().nextInt(5));
 
-        LOGGER.atInfo()
-                .addKeyValue("orderId", order.orderId())
-                .addKeyValue("trackingNumber", trackingNumber)
-                .addKeyValue("carrier", carrier)
-                .addKeyValue("estimatedDelivery", estimatedDelivery)
-                .log("Shipment prepared");
+            LOGGER.atInfo()
+                    .addKeyValue("orderId", order.orderId())
+                    .addKeyValue("trackingNumber", trackingNumber)
+                    .addKeyValue("carrier", carrier)
+                    .addKeyValue("estimatedDelivery", estimatedDelivery)
+                    .log("Shipment prepared");
 
-        return new ShipmentDetails(trackingNumber, carrier, estimatedDelivery);
+            return new ShipmentDetails(trackingNumber, carrier, estimatedDelivery);
+        } finally {
+            sample.stop(registry.timer("order.activity.duration", "activity", "Shipment"));
+        }
     }
 }

@@ -45,6 +45,7 @@ management:
     resource-attributes: &otel-tags
       service.name: ${spring.application.name}
       service.namespace: temporal-autoscaling-demo
+      service.instance.id: ${random.uuid}
   tracing:
     export:
       enabled: false

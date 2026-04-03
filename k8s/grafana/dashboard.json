@@ -48,8 +48,10 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "count(count by (instance) (temporal_worker_task_slots_available{task_queue=\"order-processing\"}))",
+          "expr": "count(jvm_info{service_name=\"autoscaling-demo-worker\"})",
+          "instant": true,
           "legendFormat": "Workers",
+          "range": false,
           "refId": "A"
         }
       ]

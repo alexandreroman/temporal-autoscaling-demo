@@ -1,6 +1,8 @@
 spring:
   application:
     name: autoscaling-demo-worker
+  main:
+    web-application-type: servlet
 
   temporal:
     connection:
@@ -9,12 +11,17 @@ spring:
       packages:
       - io.temporal.demos
 
+server:
+  port: 0
+
 logging:
   structured:
     format:
       console: ecs
 
 management:
+  server:
+    port: 9081
   endpoints:
     web:
       exposure:

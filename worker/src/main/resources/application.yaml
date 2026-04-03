@@ -11,6 +11,9 @@ spring:
       packages:
       - io.temporal.demos
 
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
 server:
   port: 0
 

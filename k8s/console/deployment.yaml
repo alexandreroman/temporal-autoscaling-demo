@@ -16,6 +16,7 @@ spec:
     metadata:
       labels: *labels
     spec:
+      terminationGracePeriodSeconds: 45
       containers:
         - name: console
           image: ghcr.io/alexandreroman/temporal-autoscaling-demo-console:latest
@@ -24,6 +25,10 @@ spec:
               name: http
             - containerPort: 8081
               name: management
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
           envFrom:
             - secretRef:
                 name: temporal-connection

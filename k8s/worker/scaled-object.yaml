@@ -1,3 +1,5 @@
+# KEDA ScaledObject for autoscaling workers based
+# on the Temporal task queue backlog size.
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -6,6 +8,10 @@ metadata:
 spec:
   scaleTargetRef:
     name: worker
+  # Check queue size every 10 seconds.
+  pollingInterval: 10
+  # Wait 60 seconds before scaling down.
+  cooldownPeriod: 60
   minReplicaCount: 1
   maxReplicaCount: 5
   triggers:
@@ -14,5 +20,18 @@ spec:
         endpoint: "temporal-frontend.temporal:7233"
         namespace: "default"
         taskQueue: "order-processing"
+        # Scale up when backlog exceeds 5 tasks per replica.
         targetQueueSize: "5"
+        # Activate from zero when at least 1 task is pending.
         activationTargetQueueSize: "1"
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          policies:
+            # Remove only 1 pod every 30 seconds,
+            # giving in-flight activities time to
+            # complete via graceful shutdown.
+            - type: Pods
+              value: 1
+              periodSeconds: 30

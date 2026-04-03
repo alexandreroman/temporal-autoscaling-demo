@@ -7,12 +7,12 @@ spec:
   scaleTargetRef:
     name: worker
   minReplicaCount: 1
-  maxReplicaCount: 10
+  maxReplicaCount: 5
   triggers:
-    - type: temporal-task-queue
+    - type: temporal
       metadata:
-        serverAddress: "temporal-frontend.temporal:7233"
+        endpoint: "temporal-frontend.temporal:7233"
         namespace: "default"
         taskQueue: "order-processing"
-        targetBacklogSize: "5"
-        activationTargetBacklogSize: "1"
+        targetQueueSize: "5"
+        activationTargetQueueSize: "1"

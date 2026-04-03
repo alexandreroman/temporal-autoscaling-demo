@@ -6,7 +6,7 @@
 apiVersion: temporal.io/v1alpha1
 kind: TemporalWorkerDeployment
 metadata:
-  name: autoscaling-demo-worker
+  name: worker
   namespace: temporal-autoscaling-demo
 spec:
   replicas: 1

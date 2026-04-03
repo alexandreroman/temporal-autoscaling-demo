@@ -20,6 +20,8 @@ public class ScenarioService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioService.class);
 
     private final Map<String, ScenarioProgress> activeScenarios = new ConcurrentHashMap<>();
+    // Volatile: written by request threads, read by findActive()
+    // on different threads without synchronization.
     private volatile String latestScenarioId;
 
     private final WorkflowClient workflowClient;

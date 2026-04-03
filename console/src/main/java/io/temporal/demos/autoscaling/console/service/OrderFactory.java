@@ -11,6 +11,10 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
+/**
+ * Generates randomized orders from a fixed product catalog.
+ * Used to create realistic demo data for workflow scenarios.
+ */
 @Service
 public class OrderFactory {
 

@@ -1,5 +1,10 @@
 package io.temporal.demos.autoscaling.worker.model;
 
+/**
+ * Temporal ApplicationFailure error type constants.
+ * Used to categorize failures and control retry behavior
+ * (e.g., marking certain errors as non-retryable).
+ */
 public final class Errors {
     private Errors() {}
 

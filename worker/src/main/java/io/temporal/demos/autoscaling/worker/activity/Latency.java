@@ -5,6 +5,11 @@ import io.temporal.failure.ApplicationFailure;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Simulates external service latency for demo purposes.
+ * Each activity call sleeps for a random duration within
+ * the given range, mimicking real-world I/O delays.
+ */
 final class Latency {
     private Latency() {}
 

@@ -15,6 +15,12 @@ import org.slf4j.MDC;
 import java.time.Duration;
 import java.util.Optional;
 
+/**
+ * Implements the order processing workflow as a
+ * sequential activity pipeline with Saga compensation.
+ * Each activity stub is configured with timeouts and
+ * retry policies matching its reliability profile.
+ */
 @WorkflowImpl(taskQueues = OrderWorkflow.TASK_QUEUE)
 public class OrderWorkflowImpl implements OrderWorkflow {
     private static final Logger LOGGER = Workflow.getLogger(OrderWorkflowImpl.class);
@@ -64,6 +70,8 @@ public class OrderWorkflowImpl implements OrderWorkflow {
 
     @Override
     public Result processOrder(Order order) {
+        // Saga tracks compensations (refund, release inventory)
+        // and runs them in reverse order if any step fails.
         final var saga = new Saga(new Saga.Options.Builder().build());
         try {
             MDC.put("orderId", order.orderId());

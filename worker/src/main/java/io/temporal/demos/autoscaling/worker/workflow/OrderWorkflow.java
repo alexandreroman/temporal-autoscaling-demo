@@ -8,6 +8,13 @@ import io.temporal.demos.autoscaling.worker.model.Order;
 
 import java.util.Optional;
 
+/**
+ * Order processing workflow using the Saga pattern.
+ * Orchestrates validation, inventory reservation,
+ * payment, shipment, and notification activities.
+ * On failure, previously completed steps are
+ * compensated in reverse order.
+ */
 @WorkflowInterface
 public interface OrderWorkflow {
     String TASK_QUEUE = "order-processing";

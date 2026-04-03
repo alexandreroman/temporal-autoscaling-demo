@@ -146,6 +146,11 @@
 
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    input[type="number"]:hover::-webkit-inner-spin-button,
+    input[type="number"]:hover::-webkit-outer-spin-button {
       opacity: 1;
     }
   </style>

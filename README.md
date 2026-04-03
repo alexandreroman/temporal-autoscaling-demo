@@ -94,6 +94,27 @@ task app-delete   # Delete the deployment
 **kapp** alone, or plain **kubectl**. Both tasks require
 `kustomize`.
 
+### Grafana Dashboard
+
+A pre-built **Temporal Autoscaling Demo** dashboard is
+provisioned automatically via a ConfigMap picked up by
+the Grafana sidecar. It covers:
+
+- **Autoscaling indicators**: schedule-to-start latency,
+  worker task slots, active worker count
+- **Order processing**: throughput, duration percentiles,
+  status breakdown
+- **Activity performance**: duration and throughput per
+  activity type
+- **Errors & compensation**: failure rate, error type
+  distribution, Saga compensations
+
+The dashboard is deployed alongside the application
+with `task app-deploy`.
+
+The dashboard is available in Grafana under
+**Dashboards > Temporal Autoscaling Demo**.
+
 ## Debugging
 
 Inspect workflows via the Temporal CLI:

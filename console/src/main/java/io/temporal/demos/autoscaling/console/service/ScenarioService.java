@@ -41,15 +41,21 @@ public class ScenarioService {
                     preset, new AtomicInteger(0));
         }
 
+        public int completedCount() {
+            return completedBatches.get();
+        }
+
+        public boolean isComplete() {
+            return completedBatches.get() >= totalBatches;
+        }
+
         public int percent() {
             return completedBatches.get() * 100 / totalBatches;
         }
     }
 
     public String start(int totalCount, int batchSize, int delaySeconds, String preset) {
-        activeScenarios.entrySet().removeIf(
-                e -> e.getValue().completedBatches().get() >= e.getValue().totalBatches()
-        );
+        activeScenarios.entrySet().removeIf(e -> e.getValue().isComplete());
 
         final var totalBatches = Preset.batchCount(totalCount, batchSize);
         final var scenarioId = UUID.randomUUID().toString().substring(0, 8);
@@ -69,10 +75,7 @@ public class ScenarioService {
                 .addKeyValue("totalBatches", totalBatches)
                 .log("Scenario requested");
 
-        Thread.startVirtualThread(() -> runScenario(
-                scenarioId, preset, totalCount, batchSize,
-                delaySeconds, totalBatches, progress
-        ));
+        Thread.startVirtualThread(() -> runScenario(scenarioId, progress));
 
         return scenarioId;
     }
@@ -83,7 +86,7 @@ public class ScenarioService {
             return Optional.empty();
         }
         final var progress = activeScenarios.get(id);
-        if (progress == null || progress.completedBatches().get() >= progress.totalBatches()) {
+        if (progress == null || progress.isComplete()) {
             return Optional.empty();
         }
         return Optional.of(Map.entry(id, progress));
@@ -97,16 +100,17 @@ public class ScenarioService {
         activeScenarios.remove(id);
     }
 
-    private void runScenario(
-            String scenarioId, String preset, int totalCount,
-            int batchSize, int delaySeconds, int totalBatches,
-            ScenarioProgress progress) {
+    private void runScenario(String scenarioId, ScenarioProgress progress) {
+        final var totalCount = progress.totalCount();
+        final var batchSize = progress.batchSize();
+        final var totalBatches = progress.totalBatches();
+        final var preset = progress.preset();
         var launched = 0;
         var batchNumber = 1;
         while (launched < totalCount) {
             if (batchNumber > 1) {
                 try {
-                    Thread.sleep((long) delaySeconds * 1000);
+                    Thread.sleep((long) progress.delaySeconds() * 1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     LOGGER.atWarn()

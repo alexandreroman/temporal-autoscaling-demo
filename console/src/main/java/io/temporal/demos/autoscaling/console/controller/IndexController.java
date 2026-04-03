@@ -33,9 +33,9 @@ public class IndexController {
             return "index";
         }
 
-        final var defaults = Preset.DEFAULTS.get("normal");
+        final var defaults = Preset.DEFAULTS.get(Preset.NORMAL);
         populateFormModel(model, defaults.totalCount(), defaults.batchSize(),
-                defaults.delaySeconds(), "normal");
+                defaults.delaySeconds(), Preset.NORMAL);
         return "index";
     }
 
@@ -51,12 +51,12 @@ public class IndexController {
             populateFormModel(model, p.totalCount(), p.batchSize(),
                     p.delaySeconds(), name);
         } else {
-            final var normal = Preset.DEFAULTS.get("normal");
+            final var normal = Preset.DEFAULTS.get(Preset.NORMAL);
             populateFormModel(model,
                     totalCount != null ? totalCount : normal.totalCount(),
                     batchSize != null ? batchSize : normal.batchSize(),
                     delaySeconds != null ? delaySeconds : normal.delaySeconds(),
-                    "custom");
+                    Preset.CUSTOM);
         }
         return "index :: form-content";
     }
@@ -67,7 +67,7 @@ public class IndexController {
             @RequestParam int batchSize,
             @RequestParam int delaySeconds,
             Model model) {
-        populateFormModel(model, totalCount, batchSize, delaySeconds, "custom");
+        populateFormModel(model, totalCount, batchSize, delaySeconds, Preset.CUSTOM);
         return "fragments/plan-response";
     }
 
@@ -106,8 +106,7 @@ public class IndexController {
         }
 
         final var progress = maybeProgress.get();
-        final var completed = progress.completedBatches().get();
-        if (completed >= progress.totalBatches()) {
+        if (progress.isComplete()) {
             scenarioService.remove(id);
             populateFormModel(model, progress.totalCount(),
                     progress.batchSize(), progress.delaySeconds(),
@@ -118,7 +117,7 @@ public class IndexController {
         }
 
         model.addAttribute("scenarioId", id);
-        model.addAttribute("completedBatches", completed);
+        model.addAttribute("completedBatches", progress.completedCount());
         model.addAttribute("totalBatches", progress.totalBatches());
         model.addAttribute("percent", progress.percent());
         return "index :: progress-bar";
@@ -146,7 +145,7 @@ public class IndexController {
                                        ScenarioProgress progress) {
         model.addAttribute("disabled", true);
         model.addAttribute("scenarioId", scenarioId);
-        model.addAttribute("completedBatches", progress.completedBatches().get());
+        model.addAttribute("completedBatches", progress.completedCount());
         model.addAttribute("totalBatches", progress.totalBatches());
         model.addAttribute("percent", progress.percent());
     }

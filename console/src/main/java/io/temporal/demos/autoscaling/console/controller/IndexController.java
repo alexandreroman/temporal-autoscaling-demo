@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -150,6 +151,10 @@ public class IndexController {
             @RequestParam("preset") String preset,
             Model model) {
 
+        ACTIVE_SCENARIOS.entrySet().removeIf(
+                e -> e.getValue().completedBatches().get()
+                        >= e.getValue().totalBatches());
+
         final var totalBatches = batchCount(totalCount, batchSize);
         final var scenarioId = UUID.randomUUID().toString().substring(0, 8);
 
@@ -200,7 +205,7 @@ public class IndexController {
         model.addAttribute("completedBatches", 0);
         model.addAttribute("totalBatches", totalBatches);
         model.addAttribute("percent", 0);
-        return "fragments/scenario-started";
+        return "index :: form-content";
     }
 
     private void launchBatch(int size, String preset, int batchNumber, int totalBatches) {
@@ -257,19 +262,25 @@ public class IndexController {
     }
 
     @GetMapping("/scenarios/{id}/progress")
-    public String scenarioProgress(@PathVariable String id, Model model) {
+    public String scenarioProgress(
+            @PathVariable String id,
+            Model model,
+            HttpServletResponse response) {
         final var progress = ACTIVE_SCENARIOS.get(id);
         if (progress == null) {
-            return "fragments/progress-complete";
+            return "index :: launch-button";
         }
 
         final var completed = progress.completedBatches().get();
         if (completed >= progress.totalBatches()) {
             ACTIVE_SCENARIOS.remove(id);
             populateFormModel(model, progress.totalCount(),
-                    progress.batchSize(), progress.delaySeconds(),
+                    progress.batchSize(),
+                    progress.delaySeconds(),
                     progress.preset());
-            return "fragments/progress-complete";
+            response.setHeader("HX-Retarget", "#form-content");
+            response.setHeader("HX-Reswap", "outerHTML");
+            return "index :: form-content";
         }
 
         model.addAttribute("scenarioId", id);

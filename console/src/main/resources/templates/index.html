@@ -263,8 +263,8 @@
         <form th:action="@{/scenarios}" method="post"
               id="scenario-form"
               th:hx-post="@{/scenarios}"
-              hx-target="#launch-area"
-              hx-swap="innerHTML">
+              hx-target="#form-content"
+              hx-swap="outerHTML">
           <input type="hidden" name="preset"
                  id="preset-input"
                  th:value="${activePreset} ?: 'normal'">
@@ -402,7 +402,8 @@
         </div>
 
           <div id="launch-area">
-            <div th:fragment="launch-button">
+            <div th:fragment="launch-button"
+                 th:unless="${scenarioId}">
             <button type="submit"
                     form="scenario-form"
                     class="block w-full py-[0.85rem]

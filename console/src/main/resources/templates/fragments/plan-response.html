@@ -8,5 +8,8 @@
     <th:block th:replace="~{index :: preset-buttons}">
     </th:block>
   </div>
+  <!--/* OOB swap: force preset to "custom" */-->
+  <input type="hidden" name="preset" id="preset-input"
+         value="custom" hx-swap-oob="true">
 </body>
 </html>

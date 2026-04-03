@@ -1,0 +1,22 @@
+# HTTPRoute using Kubernetes Gateway API to
+# expose the console via Traefik. Routes all
+# traffic on the root path to the console service.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: autoscaling-demo-console
+  namespace: temporal-autoscaling-demo
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+  hostnames:
+    - "temporal-autoscaling-demo.127-0-0-1.nip.io"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: autoscaling-demo-console
+          port: 80

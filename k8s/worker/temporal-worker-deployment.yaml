@@ -1,0 +1,49 @@
+# TemporalWorkerDeployment managed by the Temporal
+# Worker Controller. The controller auto-injects
+# TEMPORAL_ADDRESS, TEMPORAL_NAMESPACE,
+# TEMPORAL_DEPLOYMENT_NAME, and
+# TEMPORAL_WORKER_BUILD_ID into the container.
+apiVersion: temporal.io/v1alpha1
+kind: TemporalWorkerDeployment
+metadata:
+  name: autoscaling-demo-worker
+  namespace: temporal-autoscaling-demo
+spec:
+  replicas: 1
+  sunset:
+    scaledownDelay: 1m
+    deleteDelay: 1m
+  workerOptions:
+    connectionRef:
+      name: temporal
+    temporalNamespace: default
+  rollout:
+    strategy: AllAtOnce
+  template:
+    spec:
+      containers:
+      - name: worker
+        image: ghcr.io/alexandreroman/temporal-autoscaling-demo-worker:latest
+        ports:
+        - containerPort: 9081
+          name: management
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://otel-collector.opentelemetry:4318"
+        resources:
+          requests:
+            memory: 512Mi
+          limits:
+            memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: management
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: management
+          initialDelaySeconds: 15
+          periodSeconds: 10

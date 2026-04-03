@@ -1,0 +1,48 @@
+# Deployment for the autoscaling demo console.
+# Provides a web UI to trigger workflows with
+# pre-defined load scenarios.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autoscaling-demo-console
+  namespace: temporal-autoscaling-demo
+  labels:
+    app: autoscaling-demo-console
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoscaling-demo-console
+  template:
+    metadata:
+      labels:
+        app: autoscaling-demo-console
+    spec:
+      containers:
+        - name: console
+          image: ghcr.io/alexandreroman/temporal-autoscaling-demo-console:latest
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 8081
+              name: management
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: "temporal-frontend.temporal:7233"
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: management
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: management
+            initialDelaySeconds: 15
+            periodSeconds: 10

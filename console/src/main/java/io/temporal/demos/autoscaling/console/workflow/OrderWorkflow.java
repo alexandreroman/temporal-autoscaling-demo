@@ -25,7 +25,11 @@ public interface OrderWorkflow {
     record Result(
             String orderId,
             String status,
-            Optional<String> errorMessage
+            Optional<Error> error
     ) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_ABSENT)
+    record Error(String message, String type) {
     }
 }

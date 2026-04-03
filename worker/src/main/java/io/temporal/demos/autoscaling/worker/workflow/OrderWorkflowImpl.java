@@ -2,6 +2,8 @@ package io.temporal.demos.autoscaling.worker.workflow;
 
 import io.temporal.activity.ActivityOptions;
 import io.temporal.common.RetryOptions;
+import io.temporal.failure.ActivityFailure;
+import io.temporal.failure.ApplicationFailure;
 import io.temporal.demos.autoscaling.worker.activity.*;
 import io.temporal.demos.autoscaling.worker.model.Errors;
 import io.temporal.demos.autoscaling.worker.model.Order;
@@ -99,7 +101,14 @@ public class OrderWorkflowImpl implements OrderWorkflow {
         } catch (Exception e) {
             LOGGER.atError().setCause(e).log("Order failed");
             saga.compensate();
-            return new Result(order.orderId(), OrderStatus.FAILED, Optional.of(e.getMessage()));
+            final var errorType = e instanceof ActivityFailure af
+                    && af.getCause() instanceof ApplicationFailure appF
+                    ? appF.getType()
+                    : e.getClass().getSimpleName();
+            return new Result(
+                    order.orderId(),
+                    OrderStatus.FAILED,
+                    Optional.of(new OrderWorkflow.Error(e.getMessage(), errorType)));
         } finally {
             MDC.remove("orderId");
         }

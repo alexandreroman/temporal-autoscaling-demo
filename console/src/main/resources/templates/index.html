@@ -263,6 +263,7 @@
         <form th:action="@{/scenarios}" method="post"
               id="scenario-form"
               th:hx-post="@{/scenarios}"
+              hx-validate="true"
               hx-target="#form-content"
               hx-swap="outerHTML">
           <input type="hidden" name="preset"
@@ -282,7 +283,7 @@
               <input type="number" id="totalCount"
                      name="totalCount"
                      th:value="${totalCount}"
-                     min="10" step="10"
+                     min="10" step="10" required
                      hx-get="/plan"
                      hx-include="#scenario-form"
                      hx-target="#plan-summary"
@@ -311,7 +312,7 @@
               <input type="number" id="batchSize"
                      name="batchSize"
                      th:value="${batchSize}"
-                     min="1" step="1"
+                     min="1" step="1" required
                      hx-get="/plan"
                      hx-include="#scenario-form"
                      hx-target="#plan-summary"
@@ -340,7 +341,7 @@
               <input type="number" id="delaySeconds"
                      name="delaySeconds"
                      th:value="${delaySeconds}"
-                     min="1" step="1"
+                     min="1" step="1" required
                      hx-get="/plan"
                      hx-include="#scenario-form"
                      hx-target="#plan-summary"

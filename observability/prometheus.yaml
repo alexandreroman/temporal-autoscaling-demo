@@ -1,0 +1,5 @@
+global:
+  scrape_interval: 10s
+
+otlp:
+  translation_strategy: UnderscoreEscapingWithSuffixes

@@ -4,10 +4,10 @@ WORKDIR /workspace
 
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
-RUN ./mvnw dependency:go-offline -B
+RUN ./mvnw dependency:go-offline -B -q
 
 COPY src src
-RUN ./mvnw package -DskipTests -B
+RUN ./mvnw package -DskipTests -B -q
 
 # Stage 2: Extract Spring Boot layers for caching
 FROM eclipse-temurin:25-jdk AS extract

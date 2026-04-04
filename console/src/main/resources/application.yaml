@@ -2,6 +2,10 @@ spring:
   application:
     name: autoscaling-demo-console
 
+  threads:
+    virtual:
+      enabled: true
+
   temporal:
     connection:
       target: ${TEMPORAL_ADDRESS:localhost:7233}

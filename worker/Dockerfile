@@ -28,5 +28,5 @@ COPY --from=extract /workspace/extracted/spring-boot-loader/ ./
 COPY --from=extract /workspace/extracted/snapshot-dependencies/ ./
 COPY --from=extract /workspace/extracted/application/ ./
 
-EXPOSE 8080
+EXPOSE 9081
 ENTRYPOINT ["java", "-jar", "app.jar"]

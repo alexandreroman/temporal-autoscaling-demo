@@ -19,7 +19,7 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://prometheus:9090/api/v1/otlp
     restart: on-failure
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9081/actuator/health"]
       interval: 10s
       timeout: 10s
       retries: 3

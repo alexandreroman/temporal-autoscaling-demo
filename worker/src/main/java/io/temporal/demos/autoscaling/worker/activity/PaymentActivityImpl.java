@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 @ActivityImpl(taskQueues = OrderWorkflow.TASK_QUEUE)
@@ -36,12 +37,12 @@ class PaymentActivityImpl implements PaymentActivity {
 
             Latency.simulate(1500, 3000);
 
-            if (Math.random() < 0.05) {
+            if (ThreadLocalRandom.current().nextDouble() < 0.05) {
                 throw ApplicationFailure.newFailure("Gateway timeout", Errors.GATEWAY_TIMEOUT_ERROR);
             }
 
             // 2% insufficient funds: non-retryable, triggers Saga
-            if (Math.random() < 0.02) {
+            if (ThreadLocalRandom.current().nextDouble() < 0.02) {
                 throw ApplicationFailure.newNonRetryableFailure(
                         "Insufficient funds", Errors.INSUFFICIENT_FUNDS_ERROR);
             }
@@ -54,7 +55,7 @@ class PaymentActivityImpl implements PaymentActivity {
                     .addKeyValue("currency", request.currency())
                     .log("Payment processed");
 
-            return new PaymentResult(transactionId, request.amount().doubleValue(), request.currency());
+            return new PaymentResult(transactionId, request.amount(), request.currency());
         } finally {
             sample.stop(registry.timer("order.activity.duration", "activity", "Payment"));
         }

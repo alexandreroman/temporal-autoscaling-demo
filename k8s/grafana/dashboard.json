@@ -127,7 +127,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 30,
+            "fillOpacity": 10,
             "gradientMode": "none",
             "hideFrom": { "legend": false, "tooltip": false, "viz": false },
             "lineInterpolation": "smooth",
@@ -136,9 +136,10 @@
             "scaleDistribution": { "type": "linear" },
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "normal" },
+            "stacking": { "group": "A", "mode": "none" },
             "thresholdsStyle": { "mode": "off" }
           },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -156,20 +157,14 @@
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi", "sort": "desc" }
       },
-      "title": "Worker Task Slots",
+      "title": "Active Workers",
       "type": "timeseries",
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(temporal_worker_task_slots_available{task_queue=\"order-processing\"})",
-          "legendFormat": "Available",
+          "expr": "count(count_over_time(jvm_info{service_name=\"autoscaling-demo-worker\"}[1m])) or vector(0)",
+          "legendFormat": "Workers",
           "refId": "A"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "${datasource}" },
-          "expr": "sum(temporal_worker_task_slots_used{task_queue=\"order-processing\"})",
-          "legendFormat": "Used",
-          "refId": "B"
         }
       ]
     },

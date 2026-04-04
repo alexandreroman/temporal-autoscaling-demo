@@ -30,6 +30,9 @@ spec:
     horizontalPodAutoscalerConfig:
       behavior:
         scaleDown:
+          # Override the default 5-minute stabilization
+          # window so scale-down is visible during a demo.
+          stabilizationWindowSeconds: 30
           policies:
             # Remove only 1 pod every 15 seconds.
             # Activities complete in under 3 seconds,

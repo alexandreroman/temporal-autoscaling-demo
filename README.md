@@ -50,8 +50,23 @@ cd console && ./mvnw spring-boot:run
 docker compose up --build
 ```
 
-This starts Temporal, the worker, and the console. The console is
-exposed on port **8080**.
+This starts Temporal, the worker (3 replicas), the console,
+and a full observability stack (Prometheus + Grafana).
+
+| Service | URL |
+|---------|-----|
+| Console | http://localhost:8080 |
+| Temporal UI | http://localhost:8233 |
+| Prometheus | http://localhost:9090 |
+| Grafana | http://localhost:3000 |
+
+Grafana is pre-configured with anonymous access (no login
+required). Workers push metrics to Prometheus via its
+built-in OpenTelemetry (OTLP) receiver — no additional
+agent or scrape config is needed.
+
+See [Grafana dashboard](#grafana-dashboard) below for
+panel details.
 
 ## Kubernetes (Integration Environment)
 
@@ -94,26 +109,25 @@ task app-delete   # Delete the deployment
 **kapp** alone, or plain **kubectl**. Both tasks require
 `kustomize`.
 
-### Grafana Dashboard
+The [Grafana dashboard](#grafana-dashboard) is deployed
+alongside the application as a ConfigMap picked up by
+the Grafana sidecar.
 
-A pre-built **Temporal Autoscaling Demo** dashboard is
-provisioned automatically via a ConfigMap picked up by
-the Grafana sidecar. It covers:
+## Grafana Dashboard
 
-- **Autoscaling indicators**: schedule-to-start latency,
-  worker task slots, active worker count
+Both Docker Compose and Kubernetes environments ship
+a pre-built **Temporal Autoscaling Demo** dashboard
+(under **Dashboards > Temporal Autoscaling Demo**).
+It covers:
+
+- **Autoscaling indicators**: active workers,
+  schedule-to-start latency, worker task slots
 - **Order processing**: throughput, duration percentiles,
   status breakdown
 - **Activity performance**: duration and throughput per
   activity type
 - **Errors & compensation**: failure rate, error type
   distribution, Saga compensations
-
-The dashboard is deployed alongside the application
-with `task app-deploy`.
-
-The dashboard is available in Grafana under
-**Dashboards > Temporal Autoscaling Demo**.
 
 ## Debugging
 

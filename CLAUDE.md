@@ -25,6 +25,10 @@ usage instructions.
   `LOGGER.atInfo().addKeyValue("k", v).log("message")`.
   Keep message strings clean — all data goes through
   `addKeyValue()`, never embedded in the message.
+- Use `task app-deploy` / `task app-delete`
+  (defined in Taskfile.yml) to deploy or remove the
+  app in Kubernetes. Never run kustomize or kubectl
+  apply manually.
 
 ## Metrics
 

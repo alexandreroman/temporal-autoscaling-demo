@@ -34,6 +34,7 @@ services:
       context: ./console
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
+      - GRAFANA_URL=http://grafana:3000
     ports:
       - "8080:8080"
     restart: on-failure

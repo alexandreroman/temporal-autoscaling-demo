@@ -32,12 +32,15 @@ public class ScenarioService {
     private final WorkflowClient workflowClient;
     private final OrderFactory orderFactory;
     private final AsyncTaskExecutor taskExecutor;
+    private final Optional<GrafanaAnnotationService> grafanaAnnotationService;
 
     public ScenarioService(WorkflowClient workflowClient, OrderFactory orderFactory,
-                           AsyncTaskExecutor taskExecutor) {
+                           AsyncTaskExecutor taskExecutor,
+                           Optional<GrafanaAnnotationService> grafanaAnnotationService) {
         this.workflowClient = workflowClient;
         this.orderFactory = orderFactory;
         this.taskExecutor = taskExecutor;
+        this.grafanaAnnotationService = grafanaAnnotationService;
     }
 
     public record ScenarioProgress(
@@ -88,6 +91,9 @@ public class ScenarioService {
                 .addKeyValue("delaySeconds", delaySeconds)
                 .addKeyValue("totalBatches", totalBatches)
                 .log("Scenario requested");
+
+        grafanaAnnotationService.ifPresent(
+                g -> g.annotate(preset, totalCount, batchSize, delaySeconds));
 
         Thread.startVirtualThread(() -> runScenario(scenarioId, progress));
 

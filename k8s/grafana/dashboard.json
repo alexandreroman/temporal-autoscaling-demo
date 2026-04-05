@@ -1,6 +1,15 @@
 {
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "iconColor": "rgba(0, 200, 149, 0.9)",
+        "name": "Scenario",
+        "type": "tags",
+        "tags": ["scenario"]
+      }
+    ]
   },
   "editable": true,
   "fiscalYearStartMonth": 0,

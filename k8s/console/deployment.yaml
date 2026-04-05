@@ -32,6 +32,8 @@ spec:
           envFrom:
             - secretRef:
                 name: temporal-connection
+            - secretRef:
+                name: grafana
           resources:
             requests:
               memory: 256Mi

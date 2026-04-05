@@ -561,7 +561,7 @@
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "expr": "sum by (errorType) (increase(order_failure_total[$__range]))",
+              "expr": "round(sum by (errorType) (increase(order_failure_total[$__range])))",
               "legendFormat": "{{errorType}}",
               "refId": "A"
             }
@@ -601,7 +601,7 @@
           "targets": [
             {
               "datasource": { "type": "prometheus", "uid": "${datasource}" },
-              "expr": "sum(increase(order_compensation_total[$__range]))",
+              "expr": "round(sum(increase(order_compensation_total[$__range])))",
               "legendFormat": "Compensations",
               "refId": "A"
             }

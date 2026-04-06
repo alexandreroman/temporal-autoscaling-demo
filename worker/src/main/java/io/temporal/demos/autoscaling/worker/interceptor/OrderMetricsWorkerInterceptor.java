@@ -20,8 +20,6 @@ import java.util.Map;
 @Component
 class OrderMetricsWorkerInterceptor extends WorkerInterceptorBase {
 
-    private static final String WORKFLOW_TYPE = "OrderWorkflow";
-
     private final MeterRegistry registry;
 
     OrderMetricsWorkerInterceptor(MeterRegistry registry) {
@@ -64,12 +62,6 @@ class OrderMetricsWorkerInterceptor extends WorkerInterceptorBase {
         }
 
         private void recordFailureMetrics(Scope scope, WorkflowOutput output) {
-            final var workflowType =
-                    Workflow.getInfo().getWorkflowType();
-            if (!WORKFLOW_TYPE.equals(workflowType)) {
-                return;
-            }
-
             final var result = (OrderWorkflow.Result) output.getResult();
             if (result.status() != OrderStatus.FAILED) {
                 return;

@@ -78,7 +78,7 @@ public class OrderWorkflowImpl implements OrderWorkflow {
         return currentStatus;
     }
 
-    private void updateStatus(String orderId, OrderStatus status) {
+    private void updateStatus(OrderStatus status) {
         currentStatus = status;
         Workflow.getMetricsScope()
                 .tagged(Map.of("status", status.label()))
@@ -95,36 +95,36 @@ public class OrderWorkflowImpl implements OrderWorkflow {
             MDC.put("orderId", order.orderId());
             LOGGER.atInfo().log("Processing order");
 
-            updateStatus(order.orderId(), OrderStatus.VALIDATING);
+            updateStatus(OrderStatus.VALIDATING);
             validation.validateOrder(order);
             LOGGER.atInfo().log("Order validated");
 
-            updateStatus(order.orderId(), OrderStatus.RESERVING);
+            updateStatus(OrderStatus.RESERVING);
             inventory.reserveInventory(order.items());
             saga.addCompensation(inventory::releaseInventory, order.items());
             LOGGER.atInfo().log("Inventory reserved");
 
-            updateStatus(order.orderId(), OrderStatus.PAYING);
+            updateStatus(OrderStatus.PAYING);
             final var result = payment.processPayment(order.payment());
             saga.addCompensation(payment::refundPayment, result.transactionId());
             LOGGER.atInfo().addKeyValue("transactionId", result.transactionId()).log("Payment processed");
 
-            updateStatus(order.orderId(), OrderStatus.PREPARING);
+            updateStatus(OrderStatus.PREPARING);
             final var details = shipment.prepareShipment(order);
             LOGGER.atInfo().addKeyValue("trackingNumber", details.trackingNumber()).log("Shipment prepared");
 
-            updateStatus(order.orderId(), OrderStatus.NOTIFYING);
+            updateStatus(OrderStatus.NOTIFYING);
             notification.sendConfirmation(order, result, details);
             LOGGER.atInfo().log("Notification sent");
 
-            updateStatus(order.orderId(), OrderStatus.COMPLETED);
+            updateStatus(OrderStatus.COMPLETED);
             LOGGER.atInfo().log("Order completed");
             return new Result(order.orderId(), OrderStatus.COMPLETED, Optional.empty());
         } catch (Exception e) {
             LOGGER.atError().setCause(e).log("Order failed");
-            updateStatus(order.orderId(), OrderStatus.COMPENSATING);
+            updateStatus(OrderStatus.COMPENSATING);
             saga.compensate();
-            updateStatus(order.orderId(), OrderStatus.FAILED);
+            updateStatus(OrderStatus.FAILED);
             final var errorType = e instanceof ActivityFailure af
                     && af.getCause() instanceof ApplicationFailure appF
                     ? appF.getType()

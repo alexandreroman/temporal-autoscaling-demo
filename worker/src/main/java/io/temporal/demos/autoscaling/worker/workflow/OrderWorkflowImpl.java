@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.MDC;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -70,15 +71,6 @@ public class OrderWorkflowImpl implements OrderWorkflow {
                             .build())
                     .build());
 
-    private final MetricsActivity metrics = Workflow.newActivityStub(
-            MetricsActivity.class,
-            ActivityOptions.newBuilder()
-                    .setStartToCloseTimeout(Duration.ofSeconds(2))
-                    .setRetryOptions(RetryOptions.newBuilder()
-                            .setMaximumAttempts(1)
-                            .build())
-                    .build());
-
     private OrderStatus currentStatus = OrderStatus.PENDING;
 
     @Override
@@ -88,14 +80,16 @@ public class OrderWorkflowImpl implements OrderWorkflow {
 
     private void updateStatus(String orderId, OrderStatus status) {
         currentStatus = status;
-        metrics.recordOrderStatus(orderId, status);
+        Workflow.getMetricsScope()
+                .tagged(Map.of("status", status.label()))
+                .counter("order.status")
+                .inc(1);
     }
 
     @Override
     public Result processOrder(Order order) {
         // Saga tracks compensations (refund, release inventory)
         // and runs them in reverse order if any step fails.
-        final var startTime = Workflow.currentTimeMillis();
         final var saga = new Saga(new Saga.Options.Builder().build());
         try {
             MDC.put("orderId", order.orderId());
@@ -124,12 +118,10 @@ public class OrderWorkflowImpl implements OrderWorkflow {
             LOGGER.atInfo().log("Notification sent");
 
             updateStatus(order.orderId(), OrderStatus.COMPLETED);
-            metrics.recordOrderDuration(Workflow.currentTimeMillis() - startTime);
             LOGGER.atInfo().log("Order completed");
             return new Result(order.orderId(), OrderStatus.COMPLETED, Optional.empty());
         } catch (Exception e) {
             LOGGER.atError().setCause(e).log("Order failed");
-            metrics.recordOrderCompensation();
             updateStatus(order.orderId(), OrderStatus.COMPENSATING);
             saga.compensate();
             updateStatus(order.orderId(), OrderStatus.FAILED);
@@ -137,8 +129,6 @@ public class OrderWorkflowImpl implements OrderWorkflow {
                     && af.getCause() instanceof ApplicationFailure appF
                     ? appF.getType()
                     : e.getClass().getSimpleName();
-            metrics.recordOrderFailure(errorType);
-            metrics.recordOrderDuration(Workflow.currentTimeMillis() - startTime);
             return new Result(
                     order.orderId(),
                     OrderStatus.FAILED,

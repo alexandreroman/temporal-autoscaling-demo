@@ -47,9 +47,13 @@ Custom Micrometer metrics exposed by the worker:
 - `order.compensation` — Counter. Incremented when a Saga
   compensation is triggered.
 
-Metrics are recorded via `MetricsActivity`
-(workflow-level) and directly in each `ActivityImpl`
-(activity durations).
+Metrics are recorded via SDK interceptors
+(`OrderMetricsWorkerInterceptor`): workflow duration,
+failures, and compensations are captured in a
+`WorkflowInboundCallsInterceptor`; activity durations
+are captured in an `ActivityInboundCallsInterceptor`.
+Status transitions are emitted directly in the workflow
+via `Workflow.getMetricsScope()`.
 
 Actuator endpoint:
 `GET /actuator/metrics/{name}` on management port (9081).

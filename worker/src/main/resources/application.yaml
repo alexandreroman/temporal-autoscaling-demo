@@ -10,7 +10,6 @@ spring:
     workers-auto-discovery:
       packages:
       - io.temporal.demos
-
   lifecycle:
     # Activities complete in under 3 seconds;
     # 10 seconds is enough to drain in-flight work.
@@ -56,3 +55,20 @@ management:
       percentiles-histogram:
         order.duration: true
         order.activity.duration: true
+
+---
+# Enable Worker Versioning when running on Kubernetes.
+# The Worker Controller injects TEMPORAL_DEPLOYMENT_NAME
+# and TEMPORAL_WORKER_BUILD_ID into the pod environment.
+spring:
+  config:
+    activate:
+      on-cloud-platform: kubernetes
+  temporal:
+    workers:
+      - task-queue: order-processing
+        deployment-properties:
+          use-versioning: true
+          deployment-name: ${TEMPORAL_DEPLOYMENT_NAME}
+          build-id: ${TEMPORAL_WORKER_BUILD_ID}
+          default-versioning-behavior: auto-upgrade

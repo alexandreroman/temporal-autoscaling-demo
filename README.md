@@ -17,6 +17,8 @@ between elasticity and reliability.
 
 ## How Temporal Solves It
 
+https://github.com/user-attachments/assets/9f6c2576-bcbc-40ac-b9fb-fce80585001c
+
 [Temporal](https://temporal.io) decouples workflow state
 from the workers that execute it. The Temporal Server
 durably persists every state transition, so workers are

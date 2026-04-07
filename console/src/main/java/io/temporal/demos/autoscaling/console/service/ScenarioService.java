@@ -92,9 +92,6 @@ public class ScenarioService {
                 .addKeyValue("totalBatches", totalBatches)
                 .log("Scenario requested");
 
-        grafanaAnnotationService.ifPresent(
-                g -> g.annotate(preset, totalCount, batchSize, delaySeconds));
-
         Thread.startVirtualThread(() -> runScenario(scenarioId, progress));
 
         return scenarioId;
@@ -121,6 +118,10 @@ public class ScenarioService {
     }
 
     private void runScenario(String scenarioId, ScenarioProgress progress) {
+        grafanaAnnotationService.ifPresent(
+                g -> g.annotate(progress.preset(), progress.totalCount(),
+                        progress.batchSize(), progress.delaySeconds()));
+
         final var totalCount = progress.totalCount();
         final var batchSize = progress.batchSize();
         final var totalBatches = progress.totalBatches();

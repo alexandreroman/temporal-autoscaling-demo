@@ -16,4 +16,4 @@ secretGenerator:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.opentelemetry:4318
   - name: grafana
     literals:
-      - GRAFANA_URL=http://grafana.monitoring.svc.cluster.local:3000
+      - GRAFANA_URL=http://grafana.monitoring.svc.cluster.local

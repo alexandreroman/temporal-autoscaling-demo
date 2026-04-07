@@ -5,9 +5,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -19,9 +21,17 @@ public class GrafanaAnnotationService {
 
     private final RestClient restClient;
 
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
+
     public GrafanaAnnotationService(@Value("${grafana.url}") String grafanaUrl,
                                     @Value("${grafana.api-key:}") String apiKey) {
-        final var builder = RestClient.builder().baseUrl(grafanaUrl);
+        final var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(REQUEST_TIMEOUT);
+        requestFactory.setReadTimeout(REQUEST_TIMEOUT);
+
+        final var builder = RestClient.builder()
+                .baseUrl(grafanaUrl)
+                .requestFactory(requestFactory);
         if (apiKey != null && !apiKey.isBlank()) {
             builder.defaultHeader("Authorization", "Bearer " + apiKey);
         }

@@ -1,6 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: temporal-autoscaling-demo
+images:
+  - name: ghcr.io/alexandreroman/temporal-autoscaling-demo-console
+    newTag: latest
+  - name: ghcr.io/alexandreroman/temporal-autoscaling-demo-worker
+    newTag: latest
 resources:
   - namespace.yaml
   - worker

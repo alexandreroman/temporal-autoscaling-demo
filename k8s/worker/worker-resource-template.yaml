@@ -5,7 +5,6 @@ apiVersion: temporal.io/v1alpha1
 kind: WorkerResourceTemplate
 metadata:
   name: worker-hpa
-  namespace: temporal-autoscaling-demo
 spec:
   temporalWorkerDeploymentRef:
     name: worker

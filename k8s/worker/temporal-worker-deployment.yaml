@@ -2,7 +2,6 @@ apiVersion: temporal.io/v1alpha1
 kind: TemporalWorkerDeployment
 metadata:
   name: worker
-  namespace: temporal-autoscaling-demo
 spec:
   workerOptions:
     connectionRef:
@@ -34,7 +33,7 @@ spec:
       terminationGracePeriodSeconds: 20
       containers:
       - name: worker
-        image: ghcr.io/alexandreroman/temporal-autoscaling-demo-worker:latest
+        image: ghcr.io/alexandreroman/temporal-autoscaling-demo-worker
         ports:
         - containerPort: 9081
           name: management

@@ -1,0 +1,23 @@
+# Kustomize transformer configuration for the
+# TemporalWorkerDeployment CRD.
+#
+# Kustomize knows how to transform standard resources
+# (Deployments, Services, etc.) but needs explicit
+# configuration for CRD-specific field paths.
+#
+# This file teaches kustomize where to apply
+# Secret name substitution inside the CRD.
+#
+# Note: the default kustomize image transformer
+# already covers spec/template/spec/containers[]/image
+# for all resource kinds, so no explicit images section
+# is needed here.
+nameReference:
+  - kind: Secret
+    fieldSpecs:
+      - path: spec/template/spec/containers/envFrom/secretRef/name
+        kind: TemporalWorkerDeployment
+      - path: spec/template/spec/initContainers/envFrom/secretRef/name
+        kind: TemporalWorkerDeployment
+      - path: spec/template/spec/containers/env/valueFrom/secretKeyRef/name
+        kind: TemporalWorkerDeployment

@@ -5,7 +5,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: console
-  namespace: temporal-autoscaling-demo
 spec:
   replicas: 1
   selector:
@@ -19,7 +18,7 @@ spec:
       terminationGracePeriodSeconds: 45
       containers:
         - name: console
-          image: ghcr.io/alexandreroman/temporal-autoscaling-demo-console:latest
+          image: ghcr.io/alexandreroman/temporal-autoscaling-demo-console
           ports:
             - containerPort: 8080
               name: http

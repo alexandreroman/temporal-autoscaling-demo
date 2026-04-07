@@ -5,4 +5,4 @@ resources:
   - temporal-worker-deployment.yaml
   - worker-resource-template.yaml
 configurations:
-  - kustomize-name-references.yaml
+  - kustomize-crd-config.yaml

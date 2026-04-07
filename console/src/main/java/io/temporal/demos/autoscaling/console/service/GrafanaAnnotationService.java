@@ -49,7 +49,7 @@ public class GrafanaAnnotationService {
         } catch (Exception e) {
             LOGGER.atWarn()
                     .addKeyValue("preset", preset)
-                    .addKeyValue("error", e.getMessage())
+                    .addKeyValue("reason", e.getMessage())
                     .log("Failed to create Grafana annotation", e);
         }
     }

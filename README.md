@@ -1,34 +1,140 @@
 # Temporal Autoscaling Demo
 
-Demonstrates how [Temporal](https://temporal.io) handles autoscaling
-for workflows without data loss, thanks to **Durable Execution**.
+## The Problem: Scaling Stateful Workflows Is Hard
 
-Workers can be scaled up and down (or even restarted mid-flight)
-while workflows keep running reliably. An order-processing workflow
-is used as the example workload.
+Traditional workflow engines tie execution state to the
+process running it. When that process crashes, scales down,
+or restarts during a deployment, in-flight work is lost.
+Teams compensate with custom checkpointing, idempotency
+layers, and recovery logic -- adding complexity that has
+nothing to do with the business problem they are solving.
+
+Autoscaling makes this worse. Scaling workers down under
+load means killing processes that may hold uncommitted
+state. Scaling up means new workers must somehow discover
+and resume orphaned work. Most systems force you to choose
+between elasticity and reliability.
+
+## How Temporal Solves It
+
+[Temporal](https://temporal.io) decouples workflow state
+from the workers that execute it. The Temporal Server
+durably persists every state transition, so workers are
+**stateless and disposable**. This unlocks a set of
+properties that are difficult to achieve any other way:
+
+- **Durable Execution** -- Workflow progress is persisted
+  by the Temporal Server, not the worker. A worker can
+  crash, restart, or be terminated at any point, and the
+  workflow resumes exactly where it left off on another
+  worker. No data loss, no custom recovery code.
+
+- **Elastic scaling without risk** -- Workers can scale
+  from zero to hundreds and back again. KEDA (or any
+  autoscaler) can freely add or remove worker pods based
+  on task-queue backlog. In-flight workflows are never
+  affected because state lives in the server, not the
+  worker.
+
+- **Automatic retries with backoff** -- Transient
+  failures (network timeouts, downstream outages) are
+  retried automatically according to configurable
+  policies. Activities retry transparently; the
+  workflow author writes only the happy path.
+
+- **Saga pattern for compensations** -- When a
+  multi-step workflow fails partway through (e.g. payment
+  succeeds but shipment fails), Temporal orchestrates
+  compensating actions to roll back completed steps.
+  The compensation logic is expressed directly in
+  code -- no external state machines or coordination
+  tables.
+
+- **Full visibility into workflow state** -- Every
+  workflow execution is inspectable: current status,
+  complete event history, pending activities, and
+  query handlers. Debugging a stuck order means opening
+  the Temporal UI, not grepping through logs.
+
+## What This Demo Shows
+
+This project demonstrates these properties with a
+realistic **order-processing workflow** that runs
+through validation, inventory, payment, shipment, and
+notification activities. A web console lets you launch
+configurable load scenarios and watch Temporal handle
+them -- even as workers scale up, scale down, or
+restart mid-flight.
+
+The demo includes a full observability stack
+(Prometheus + Grafana) so you can see autoscaling
+decisions, workflow throughput, activity durations,
+error rates, and Saga compensations in real time.
+
+![Grafana dashboard showing order processing metrics](app-monitoring.png)
 
 ## Architecture
+
+The following diagram shows how the components
+interact:
+
+```mermaid
+graph TB
+    %% Main workflow submission flow (top row)
+    User[User] -->|HTTP :8080| Console
+
+    subgraph App["Application"]
+        Console[Console<br>Spring Boot]
+        Workers[Worker Pool<br>1-N replicas]
+    end
+
+    subgraph Temporal["Temporal Platform"]
+        Server[Temporal Server<br>gRPC :7233]
+        TQ[Task Queue<br>order-processing]
+    end
+
+    Console -->|start workflow<br>gRPC| Server
+    Server --> TQ
+
+    %% Worker and KEDA layer (middle row)
+    TQ -->|polled by| Workers
+    TQ ~~~ KEDA
+    KEDA[KEDA] -->|query backlog| Server
+    KEDA -->|scale 1-5| Workers
+
+    %% Observability stack (bottom row)
+    subgraph Observability
+        OTel[OTel Collector<br>:4318]
+        Prometheus[Prometheus<br>:9090]
+        Grafana[Grafana<br>:3000]
+    end
+
+    Workers -->|OTLP metrics| OTel
+    OTel --> Prometheus
+    Grafana -->|query| Prometheus
+```
 
 | Component | Stack | Purpose |
 |-----------|-------|---------|
 | **`worker/`** | Java 25, Spring Boot 4, Temporal SDK | Hosts the `OrderWorkflow` and its activities (payment, inventory, shipment, validation, notification) |
 | **`console/`** | Java 25, Spring Boot 4, Thymeleaf | Web UI to trigger workflows with pre-defined load scenarios |
 
-Both components expose metrics in **OpenTelemetry** format, visualized
-through a Grafana dashboard.
+Both components expose metrics in **OpenTelemetry**
+format, visualized through a Grafana dashboard.
 
 ## Prerequisites
 
 - Java 25+
-- [Temporal CLI](https://docs.temporal.io/cli) (`temporal`)
+- [Temporal CLI](https://docs.temporal.io/cli)
+  (`temporal`)
 - Docker & Docker Compose (for containerized setup)
 
 ## Quick Start
 
 ### Local (bare-metal)
 
-Start a local Temporal dev server, then run the worker and console
-in separate terminals:
+Start a local Temporal dev server, then run the worker
+and console in separate terminals:
 
 ```bash
 # Terminal 1
@@ -50,8 +156,9 @@ cd console && ./mvnw spring-boot:run
 docker compose up --build
 ```
 
-This starts Temporal, the worker (3 replicas), the console,
-and a full observability stack (Prometheus + Grafana).
+This starts Temporal, the worker (3 replicas), the
+console, and a full observability stack
+(Prometheus + Grafana).
 
 | Service | URL |
 |---------|-----|
@@ -60,24 +167,25 @@ and a full observability stack (Prometheus + Grafana).
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3000 |
 
-Grafana is pre-configured with anonymous access (no login
-required). Workers push metrics to Prometheus via its
-built-in OpenTelemetry (OTLP) receiver — no additional
-agent or scrape config is needed.
+Grafana is pre-configured with anonymous access (no
+login required). Workers push metrics to Prometheus
+via its built-in OpenTelemetry (OTLP) receiver -- no
+additional agent or scrape config is needed.
 
 See [Grafana dashboard](#grafana-dashboard) below for
 panel details.
 
 ## Kubernetes (Integration Environment)
 
-The integration environment runs on a local Kubernetes cluster
-provisioned by
+The integration environment runs on a local Kubernetes
+cluster provisioned by
 [temporal-k8s](https://github.com/alexandreroman/temporal-k8s).
-This project deploys Temporal alongside **Grafana** for metrics
-visualization and **KEDA** for autoscaling workers based on
-Temporal task-queue backlog.
+This project deploys Temporal alongside **Grafana** for
+metrics visualization and **KEDA** for autoscaling
+workers based on Temporal task-queue backlog.
 
-Once the cluster is up, use the `it` Spring profile to connect:
+Once the cluster is up, use the `it` Spring profile
+to connect:
 
 ```bash
 # Terminal 1
@@ -105,9 +213,9 @@ task app-deploy   # Deploy to Kubernetes
 task app-delete   # Delete the deployment
 ```
 
-`app-deploy` picks the best available toolchain: **kapp + kbld**,
-**kapp** alone, or plain **kubectl**. Both tasks require
-`kustomize`.
+`app-deploy` picks the best available toolchain:
+**kapp + kbld**, **kapp** alone, or plain **kubectl**.
+Both tasks require `kustomize`.
 
 The [Grafana dashboard](#grafana-dashboard) is deployed
 alongside the application as a ConfigMap picked up by
@@ -122,10 +230,10 @@ It covers:
 
 - **Autoscaling indicators**: active workers,
   schedule-to-start latency, worker task slots
-- **Order processing**: throughput, duration percentiles,
-  status breakdown
-- **Activity performance**: duration and throughput per
-  activity type
+- **Order processing**: throughput, duration
+  percentiles, status breakdown
+- **Activity performance**: duration and throughput
+  per activity type
 - **Errors & compensation**: failure rate, error type
   distribution, Saga compensations
 

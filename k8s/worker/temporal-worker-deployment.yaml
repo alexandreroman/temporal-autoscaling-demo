@@ -15,7 +15,6 @@ spec:
     # production would use hours, not seconds.
     scaledownDelay: 30s
     deleteDelay: 60s
-  replicas: 1
   template:
     metadata:
       labels:

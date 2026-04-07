@@ -116,6 +116,40 @@ graph TB
     Grafana -->|query| Prometheus
 ```
 
+The sequence below illustrates a typical order
+workflow execution:
+
+```mermaid
+sequenceDiagram
+    participant C as Console
+    participant T as Temporal Server
+    participant W as Worker
+    participant O as OpenTelemetry
+
+    C->>T: Start OrderWorkflow (gRPC, async)
+    T-->>C: Workflow started
+
+    W->>T: Poll task queue (order-processing)
+    T->>W: Dispatch workflow task
+
+    loop For each activity
+        Note right of W: Validation, Inventory,<br/>Payment, Shipment,<br/>Notification
+        W->>T: Execute activity
+        T-->>T: Durably persist result
+        T-->>W: Activity result
+        W->>O: Emit metrics (OTLP)<br/>order.status, order.activity.duration
+    end
+
+    W->>O: Record order.duration
+    W->>T: Workflow completed
+
+    alt Activity failure (Saga compensation)
+        W->>T: Compensate: Payment refund
+        W->>T: Compensate: Inventory release
+        W->>O: Emit order.failure,<br/>order.compensation
+    end
+```
+
 | Component | Stack | Purpose |
 |-----------|-------|---------|
 | **`worker/`** | Java 25, Spring Boot 4, Temporal SDK | Hosts the `OrderWorkflow` and its activities (payment, inventory, shipment, validation, notification) |

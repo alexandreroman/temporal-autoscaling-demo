@@ -1,17 +1,26 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: temporal.io/v1alpha1
+kind: TemporalWorkerDeployment
 metadata:
   name: worker
   namespace: temporal-autoscaling-demo
 spec:
+  workerOptions:
+    connectionRef:
+      name: temporal-connection
+    temporalNamespace: default
+  rollout:
+    strategy: AllAtOnce
+  sunset:
+    # Aggressive timings for demo visibility;
+    # production would use hours, not seconds.
+    scaledownDelay: 30s
+    deleteDelay: 60s
   replicas: 1
-  selector:
-    matchLabels: &labels
-      app.kubernetes.io/name: temporal-autoscaling-demo
-      app.kubernetes.io/component: worker
   template:
     metadata:
-      labels: *labels
+      labels:
+        app.kubernetes.io/name: temporal-autoscaling-demo
+        app.kubernetes.io/component: worker
     spec:
       topologySpreadConstraints:
       - maxSkew: 1
@@ -37,8 +46,6 @@ spec:
               # before SIGTERM.
               seconds: 3
         envFrom:
-        - secretRef:
-            name: temporal-connection
         - secretRef:
             name: otel
         resources:

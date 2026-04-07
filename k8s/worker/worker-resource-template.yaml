@@ -1,0 +1,40 @@
+# HPA attached to each versioned Deployment.
+# Scales on task queue backlog via prometheus-adapter.
+# scaleTargetRef auto-injected by the controller.
+apiVersion: temporal.io/v1alpha1
+kind: WorkerResourceTemplate
+metadata:
+  name: worker-hpa
+  namespace: temporal-autoscaling-demo
+spec:
+  temporalWorkerDeploymentRef:
+    name: worker
+  template:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    spec:
+      scaleTargetRef: {}
+      minReplicas: 1
+      maxReplicas: 5
+      metrics:
+        - type: External
+          external:
+            metric:
+              name: temporal_task_queue_backlog
+            target:
+              # Scale when more than 5 tasks are
+              # queued per current replica.
+              type: AverageValue
+              averageValue: "5"
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: 10
+        scaleDown:
+          # Short window for demo visibility;
+          # production would use 5 minutes.
+          stabilizationWindowSeconds: 30
+          policies:
+            # Remove 1 pod every 15 seconds.
+            - type: Pods
+              value: 1
+              periodSeconds: 15

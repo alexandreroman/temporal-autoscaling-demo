@@ -34,11 +34,11 @@ properties that are difficult to achieve any other way:
   worker. No data loss, no custom recovery code.
 
 - **Elastic scaling without risk** -- Workers can scale
-  from zero to hundreds and back again. KEDA (or any
-  autoscaler) can freely add or remove worker pods based
-  on task-queue backlog. In-flight workflows are never
-  affected because state lives in the server, not the
-  worker.
+  from one to hundreds and back again. An HPA scales
+  worker pods based on task-queue backlog depth,
+  exposed as a Kubernetes external metric. In-flight
+  workflows are never affected because state lives in
+  the server, not the worker.
 
 - **Automatic retries with backoff** -- Transient
   failures (network timeouts, downstream outages) are
@@ -95,16 +95,17 @@ graph TB
     subgraph Temporal["Temporal Platform"]
         Server[Temporal Server<br>gRPC :7233]
         TQ[Task Queue<br>order-processing]
+        WC[Worker Controller]
     end
 
     Console -->|start workflow<br>gRPC| Server
     Server --> TQ
 
-    %% Worker and KEDA layer (middle row)
+    %% Worker Controller and HPA layer
     TQ -->|polled by| Workers
-    TQ ~~~ KEDA
-    KEDA[KEDA] -->|query backlog| Server
-    KEDA -->|scale 1-5| Workers
+    WC -->|manage versioned<br>Deployments| Workers
+    HPA[HPA] -->|scale 1-5| Workers
+    Prometheus -->|external metric<br>task queue backlog| HPA
 
     %% Observability stack (bottom row)
     subgraph Observability
@@ -114,6 +115,7 @@ graph TB
     end
 
     Workers -->|OTLP metrics| OTel
+    Server -->|backlog metric| Prometheus
     OTel --> Prometheus
     Grafana -->|query| Prometheus
 ```
@@ -219,8 +221,9 @@ The integration environment runs on a local Kubernetes
 cluster provisioned by
 [temporal-k8s](https://github.com/alexandreroman/temporal-k8s).
 This project deploys Temporal alongside **Grafana** for
-metrics visualization and **KEDA** for autoscaling
-workers based on Temporal task-queue backlog.
+metrics visualization and the **Temporal Worker
+Controller** for managing versioned worker deployments
+with HPA autoscaling based on task-queue backlog.
 
 Once the cluster is up, use the `it` Spring profile
 to connect:

@@ -1,5 +1,7 @@
 # Temporal Autoscaling Demo
 
+https://github.com/user-attachments/assets/55e8cc49-296d-4f3e-ac61-9eda7784d0c1
+
 ## The Problem: Scaling Stateful Workflows Is Hard
 
 Traditional workflow engines tie execution state to the

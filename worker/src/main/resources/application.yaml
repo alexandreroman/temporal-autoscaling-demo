@@ -69,8 +69,8 @@ spring:
     workers:
       - task-queue: order-processing
         capacity:
-          # Reduced from defaults (200 each) to fit
-          # within the 512Mi pod memory limit.
+          # Reduced from defaults (200 each) to
+          # limit thread count per worker pod.
           max-concurrent-workflow-task-execution-size: 100
           max-concurrent-activity-task-execution-size: 100
         deployment-properties:

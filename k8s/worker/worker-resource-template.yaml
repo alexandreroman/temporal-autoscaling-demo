@@ -1,5 +1,5 @@
 # HPA attached to each versioned Deployment.
-# Scales on worker slot usage via prometheus-adapter.
+# Scales on task queue backlog via prometheus-adapter.
 # scaleTargetRef auto-injected by the controller.
 apiVersion: temporal.io/v1alpha1
 kind: WorkerResourceTemplate
@@ -19,14 +19,12 @@ spec:
         - type: External
           external:
             metric:
-              name: temporal_worker_slots_used_by_version
+              name: temporal_task_queue_backlog
             target:
-              # Low threshold for demo: triggers
-              # scale-up at ~37% utilization (75 out
-              # of 200 slots: 100 workflow + 100
-              # activity).
+              # Scale when more than 5 tasks are
+              # queued per current replica.
               type: AverageValue
-              averageValue: "75"
+              averageValue: "5"
       behavior:
         scaleUp:
           stabilizationWindowSeconds: 10

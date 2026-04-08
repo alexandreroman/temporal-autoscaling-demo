@@ -1,51 +1,54 @@
 # Load Testing
 
-Start `OrderWorkflow` instances via the `temporal` CLI
-to generate load and trigger autoscaling.
+Start `OrderWorkflow` instances by sending HTTP
+requests to the console app. The console launches
+workflows in batches with configurable delays,
+which generates load and triggers autoscaling.
 
-Workflow input JSON structure:
+## Console URL
 
-```json
-{
-  "orderId": "order-001",
-  "customerId": "customer-42",
-  "items": [
-    {
-      "sku": "SKU-1234",
-      "label": "Wireless Mouse",
-      "quantity": 2,
-      "unitPrice": 29.99
-    }
-  ],
-  "payment": {
-    "method": "CreditCard",
-    "amount": 59.98,
-    "currency": "USD"
-  }
-}
-```
+| Environment  | URL                                                  |
+|--------------|------------------------------------------------------|
+| Local/Docker | `http://localhost:8080`                              |
+| Kubernetes   | `http://temporal-autoscaling-demo.127-0-0-1.nip.io` |
 
-Single workflow:
+## Presets
 
-```bash
-temporal workflow start \
-  --address temporal.127-0-0-1.nip.io:7233 \
-  --task-queue order-processing \
-  --type OrderWorkflow \
-  --workflow-id order-001 \
-  --input '{"orderId":"order-001","customerId":"customer-42","items":[{"sku":"SKU-1234","label":"Wireless Mouse","quantity":2,"unitPrice":29.99}],"payment":{"method":"CreditCard","amount":59.98,"currency":"USD"}}'
-```
+| Preset   | Workflows | Batch size | Delay |
+|----------|-----------|------------|-------|
+| `normal` | 10        | 5          | 1 s   |
+| `load`   | 1000      | 100        | 1 s   |
 
-Burst (500 workflows, parallel) to trigger autoscaling:
+## Starting a scenario
+
+Use `POST /scenarios` with form parameters
+`totalCount`, `batchSize`, `delaySeconds`, and
+`preset`.
+
+Normal load (10 workflows):
 
 ```bash
-for i in $(seq 1 500); do
-  temporal workflow start \
-    --address temporal.127-0-0-1.nip.io:7233 \
-    --task-queue order-processing \
-    --type OrderWorkflow \
-    --workflow-id "order-burst-$i" \
-    --input "{\"orderId\":\"order-burst-$i\",\"customerId\":\"customer-42\",\"items\":[{\"sku\":\"SKU-1234\",\"label\":\"Wireless Mouse\",\"quantity\":1,\"unitPrice\":29.99}],\"payment\":{\"method\":\"CreditCard\",\"amount\":29.99,\"currency\":\"USD\"}}" &
-done
-wait
+curl -X POST http://localhost:8080/scenarios \
+  -d 'totalCount=10&batchSize=5&delaySeconds=1&preset=normal'
 ```
+
+Heavy load to trigger autoscaling (1000 workflows):
+
+```bash
+curl -X POST http://localhost:8080/scenarios \
+  -d 'totalCount=1000&batchSize=100&delaySeconds=1&preset=load'
+```
+
+Custom scenario:
+
+```bash
+curl -X POST http://localhost:8080/scenarios \
+  -d 'totalCount=500&batchSize=50&delaySeconds=2&preset=custom'
+```
+
+Replace `localhost:8080` with the Kubernetes URL
+when running in a cluster.
+
+When Grafana is configured, each scenario
+automatically creates an annotation for
+correlating load tests with system metrics.

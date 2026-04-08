@@ -48,9 +48,9 @@ spec:
             name: otel
         resources:
           requests:
-            memory: 1Gi
+            memory: 512Mi
           limits:
-            memory: 1Gi
+            memory: 512Mi
         readinessProbe:
           httpGet:
             path: /actuator/health/readiness

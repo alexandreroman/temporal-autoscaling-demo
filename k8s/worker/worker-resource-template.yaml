@@ -27,7 +27,7 @@ spec:
               averageValue: "5"
       behavior:
         scaleUp:
-          stabilizationWindowSeconds: 10
+          stabilizationWindowSeconds: 5
         scaleDown:
           # Short window for demo visibility;
           # production would use 5 minutes.

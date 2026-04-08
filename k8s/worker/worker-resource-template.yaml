@@ -22,9 +22,11 @@ spec:
               name: temporal_worker_slots_used_by_version
             target:
               # Low threshold for demo: triggers
-              # scale-up quickly under light load.
+              # scale-up at ~37% utilization (75 out
+              # of 200 slots: 100 workflow + 100
+              # activity).
               type: AverageValue
-              averageValue: "50"
+              averageValue: "75"
       behavior:
         scaleUp:
           stabilizationWindowSeconds: 10

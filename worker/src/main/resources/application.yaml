@@ -58,7 +58,7 @@ management:
         order.activity.duration: true
 
 ---
-# Enable Worker Versioning when running on Kubernetes.
+# Kubernetes-specific worker configuration.
 # The Worker Controller injects TEMPORAL_DEPLOYMENT_NAME
 # and TEMPORAL_WORKER_BUILD_ID into the pod environment.
 spring:
@@ -68,6 +68,11 @@ spring:
   temporal:
     workers:
       - task-queue: order-processing
+        capacity:
+          # Reduced from defaults (200 each) to fit
+          # within the 512Mi pod memory limit.
+          max-concurrent-workflow-task-execution-size: 100
+          max-concurrent-activity-task-execution-size: 100
         deployment-properties:
           use-versioning: true
           deployment-name: ${TEMPORAL_DEPLOYMENT_NAME}

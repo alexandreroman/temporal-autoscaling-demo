@@ -5,6 +5,7 @@ spring:
     web-application-type: servlet
 
   temporal:
+    namespace: ${TEMPORAL_NAMESPACE:default}
     connection:
       target: ${TEMPORAL_ADDRESS:localhost:7233}
     workers-auto-discovery:
@@ -72,3 +73,15 @@ spring:
           deployment-name: ${TEMPORAL_DEPLOYMENT_NAME}
           build-id: ${TEMPORAL_WORKER_BUILD_ID}
           default-versioning-behavior: auto-upgrade
+
+# Tag every metric with versioning coordinates so
+# Prometheus queries can split by deployment and build.
+management:
+  metrics:
+    tags:
+      temporal.worker.deployment.name: >-
+        ${TEMPORAL_DEPLOYMENT_NAME}
+      temporal.worker.build.id: >-
+        ${TEMPORAL_WORKER_BUILD_ID}
+      temporal.namespace: >-
+        ${TEMPORAL_NAMESPACE:default}

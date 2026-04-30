@@ -1,40 +1,31 @@
 # Temporal Autoscaling Demo
 
-See [README.md](README.md) for architecture, setup, and
-usage instructions.
+See [README.md](README.md) for architecture, setup,
+and usage.
 
-## Rules
+Project rules and conventions live in the
+project-memory system at
+`.claude/project-memory/MEMORY.md` — read it
+before making changes.
 
-- All code, comments, and text must be in English only.
-- Lines of code: max 120 columns. Text and prose
-  (comments, documentation, CLAUDE.md): max 80 columns.
-- ALWAYS use the `code-writer` agent for ANY code modification,
-  no matter how small (including simple renames, find-and-replace,
-  single-line edits, refactoring, and new code).
-- ALWAYS use the `temporal` CLI to debug workflows and retrieve
-  Temporal-related details (workflow state, history, search
-  attributes, etc.) instead of guessing or relying on memory.
-- NEVER use compound bash commands (`&&`, `;`). Use separate Bash
-  tool calls instead.
-- In Java, use `var` for local variable declarations whenever
-  possible, and mark all local variables and fields `final`
-  (except method arguments).
-- In Java, `static final` constants must use
-  `UPPER_SNAKE_CASE` naming.
-- Use structured logging with the SLF4J 2.0 Fluent API:
-  `LOGGER.atInfo().addKeyValue("k", v).log("message")`.
-  Keep message strings clean — all data goes through
-  `addKeyValue()`, never embedded in the message.
-- Use `task app-deploy` / `task app-delete`
-  (defined in Taskfile.yml) to deploy or remove the
-  app in Kubernetes. Never run kustomize or kubectl
-  apply manually.
+## Agents
+
+Both agents are provided by the
+[skillbox](https://github.com/alexandreroman/skillbox)
+plugin.
+
+- Use the `code-writer` agent for ANY code
+  modification, no matter how small (renames,
+  find-and-replace, single-line edits,
+  refactoring, new code). Never edit source
+  files directly.
+- Use the `code-reviewer` agent in read-only
+  mode after non-trivial changes to audit for
+  bugs, security issues, and spec violations.
 
 ## Reference
 
-- [Metrics](docs/metrics.md) — custom Micrometer
-  metrics, SDK metrics, actuator endpoint
-- [Autoscaling](docs/autoscaling.md) — per-version
-  HPA pipeline, version tags, key files
-- [Load testing](docs/load-testing.md) — workflow
-  input schema, single and burst CLI commands
+- [Metrics](docs/metrics.md)
+- [Autoscaling](docs/autoscaling.md)
+- [Load testing](docs/load-testing.md)
+G

@@ -35,9 +35,9 @@ spec:
                 name: grafana
           resources:
             requests:
-              memory: 256Mi
+              memory: 512Mi
             limits:
-              memory: 256Mi
+              memory: 512Mi
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

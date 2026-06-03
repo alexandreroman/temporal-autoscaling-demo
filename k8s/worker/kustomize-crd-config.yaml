@@ -1,5 +1,5 @@
 # Kustomize transformer configuration for the
-# TemporalWorkerDeployment CRD.
+# WorkerDeployment CRD.
 #
 # Kustomize knows how to transform standard resources
 # (Deployments, Services, etc.) but needs explicit
@@ -16,8 +16,8 @@ nameReference:
   - kind: Secret
     fieldSpecs:
       - path: spec/template/spec/containers/envFrom/secretRef/name
-        kind: TemporalWorkerDeployment
+        kind: WorkerDeployment
       - path: spec/template/spec/initContainers/envFrom/secretRef/name
-        kind: TemporalWorkerDeployment
+        kind: WorkerDeployment
       - path: spec/template/spec/containers/env/valueFrom/secretKeyRef/name
-        kind: TemporalWorkerDeployment
+        kind: WorkerDeployment

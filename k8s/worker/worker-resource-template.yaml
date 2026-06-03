@@ -6,7 +6,7 @@ kind: WorkerResourceTemplate
 metadata:
   name: worker-hpa
 spec:
-  temporalWorkerDeploymentRef:
+  workerDeploymentRef:
     name: worker
   template:
     apiVersion: autoscaling/v2

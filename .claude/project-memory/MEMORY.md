@@ -14,3 +14,4 @@
 - [Java conventions](references/feedback_java_conventions.md) — var, final, UPPER_SNAKE_CASE, SLF4J Fluent API
 - [Worker Controller CRD version coupling](references/project_worker_controller_crd_coupling.md) — temporal-k8s controller bumps can break k8s/worker manifests (0.26.0 renamed kinds)
 - [Cluster disk footprint and podman VM constraint](references/project_cluster_disk_footprint.md) — 37G VM is tight; demo isn't the culprit; clean host cruft, don't grow
+- [Validating local app changes against the cluster](references/project_validate_local_changes_in_cluster.md) — app-deploy uses published images; validate un-pushed changes with the it profile on the host
